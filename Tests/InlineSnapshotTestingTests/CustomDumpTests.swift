@@ -1,7 +1,7 @@
 #if canImport(Testing)
 import Testing
 import InlineSnapshotTesting
-import SnapshotTestingCustomDump
+import XCSnapshotTestingCustomDump
 
 extension BaseSuite {
     struct CustomDumpSnapshotTests {
