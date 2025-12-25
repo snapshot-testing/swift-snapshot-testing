@@ -1,5 +1,5 @@
 {
-  "originHash" : "e21c6f1f369285634c828d108ce11f7e1c297fe162ef40ffb491e057916e3f1b",
+  "originHash" : "4fd7c51941b163240451c4cf2182ca6718003d84ede2b198d90dc39a16519143",
   "pins" : [
     {
       "identity" : "swift-custom-dump",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/snapshot-testing/xc-snapshot-testing",
       "state" : {
-        "revision" : "d48816af4ae17439a32e18d7dec757acee1c3375",
-        "version" : "0.1.0"
+        "revision" : "a00c9935cc6eac344575f3596272b691104d7a48",
+        "version" : "1.0.0"
       }
     },
     {
