@@ -1,13 +1,22 @@
 {
-  "originHash" : "4fd7c51941b163240451c4cf2182ca6718003d84ede2b198d90dc39a16519143",
+  "originHash" : "b90f34c14652fed133794b16517d32e1a715c24f400478e9d98fc63e1da83b4e",
   "pins" : [
+    {
+      "identity" : "swift-async-stream",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/o-nnerb/swift-async-stream",
+      "state" : {
+        "revision" : "1869103b2b14baef18dfb02b159d9cc0fe56032a",
+        "version" : "1.3.1"
+      }
+    },
     {
       "identity" : "swift-custom-dump",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-custom-dump",
       "state" : {
-        "revision" : "82645ec760917961cfa08c9c0c7104a57a0fa4b1",
-        "version" : "1.3.3"
+        "revision" : "2a2a938798236b8fa0bc57c453ee9de9f9ec3ab0",
+        "version" : "1.4.1"
       }
     },
     {
@@ -24,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/snapshot-testing/xc-snapshot-testing",
       "state" : {
-        "revision" : "a00c9935cc6eac344575f3596272b691104d7a48",
-        "version" : "1.0.0"
+        "revision" : "0e93ea436a787466d30a4678a57552972e808a06",
+        "version" : "1.1.0"
       }
     },
     {

@@ -21,8 +21,8 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing", from: "1.0.0"),
-        .package(url: "https://github.com/swiftlang/swift-syntax", "601.0.0"..<"602.0.0"),
+        .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing", from: "1.1.0"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "601.0.0"..<"603.0.0"),
     ],
     targets: [
         .target(
