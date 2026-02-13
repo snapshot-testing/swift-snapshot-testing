@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @_spi(Internals) import XCSnapshotTesting
 
-extension TestingSystem: SwiftTestingSystem {
+extension TestingSystem: @retroactive SwiftTestingSystem {
 
     public var environment: TestingSystemEnvironment? {
         Test.current?.traits.mapIntoTestingEnvironment()
@@ -37,7 +37,7 @@ extension TestingSystem: SwiftTestingSystem {
                 attachmentName = attachment.uniformTypeIdentifier
             }
 
-            Attachment.record(
+            Attachment<Data>.record(
                 payload,
                 named: attachmentName,
                 sourceLocation: SourceLocation(
