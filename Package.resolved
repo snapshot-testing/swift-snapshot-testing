@@ -1,13 +1,13 @@
 {
-  "originHash" : "b90f34c14652fed133794b16517d32e1a715c24f400478e9d98fc63e1da83b4e",
+  "originHash" : "bf348d2b48f66bc8514885c7e58da2b537704e6749ef6d07b94f4c5cd1937351",
   "pins" : [
     {
       "identity" : "swift-async-stream",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/o-nnerb/swift-async-stream",
       "state" : {
-        "revision" : "1869103b2b14baef18dfb02b159d9cc0fe56032a",
-        "version" : "1.3.1"
+        "revision" : "ad43039741c89faf02234e2c952d08062e53d6d5",
+        "version" : "1.3.2"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/snapshot-testing/xc-snapshot-testing",
       "state" : {
-        "revision" : "0e93ea436a787466d30a4678a57552972e808a06",
-        "version" : "1.1.0"
+        "revision" : "3a02c30e3c1289c2968dd227e47082b43d09792e",
+        "version" : "1.2.0"
       }
     },
     {
