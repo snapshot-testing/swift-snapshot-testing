@@ -56,10 +56,9 @@ extension FinalizeSnapshotsSuiteTrait {
     }
 }
 
-private func withTestCompletionTracking<R: Sendable>(
+private nonisolated(nonsending) func withTestCompletionTracking<R: Sendable>(
     for test: Test,
-    operation: () async throws -> R,
-    isolation: isolated Actor? = #isolation,
+    operation: nonisolated(nonsending) () async throws -> R,
     file: String = #file,
     line: UInt = #line
 ) async throws -> R {
@@ -72,7 +71,6 @@ private func withTestCompletionTracking<R: Sendable>(
     return try await TestCompletionNotifier.$current.withValue(
         TestCompletionNotifier(test.sourceLocation),
         operation: operation,
-        isolation: isolation,
         file: file,
         line: line
     )

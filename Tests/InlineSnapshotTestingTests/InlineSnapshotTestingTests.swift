@@ -68,6 +68,7 @@ final class InlineSnapshotTestingTests: BaseTestCase {
     }
 
     func testCustomInlineSnapshot_SingleTrailingClosure() throws {
+        // swift-format-ignore: OnlyOneTrailingClosureArgument
         try assertCustomInlineSnapshot(of: { "Hello" }) {
             """
             "Hello"
@@ -76,6 +77,7 @@ final class InlineSnapshotTestingTests: BaseTestCase {
     }
 
     func testCustomInlineSnapshot_MultilineSingleTrailingClosure() throws {
+        // swift-format-ignore: OnlyOneTrailingClosureArgument
         try assertCustomInlineSnapshot(
             of: { "Hello" }
         ) {

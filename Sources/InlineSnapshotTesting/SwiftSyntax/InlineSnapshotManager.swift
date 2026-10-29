@@ -172,16 +172,14 @@ final class InlineSnapshotManager: @unchecked Sendable {
 }
 
 @_spi(Internals)
-public func withInlineSnapshotManager<R: Sendable>(
-    _ operation: () async throws -> R,
-    isolation: isolated Actor? = #isolation,
+public nonisolated(nonsending) func withInlineSnapshotManager<R: Sendable>(
+    _ operation: nonisolated(nonsending) () async throws -> R,
     file: String = #file,
     line: UInt = #line
 ) async rethrows -> R {
     try await InlineSnapshotManager.$local.withValue(
         InlineSnapshotManager(),
         operation: operation,
-        isolation: isolation,
         file: file,
         line: line
     )

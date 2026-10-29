@@ -94,6 +94,7 @@ extension BaseSuite {
         }
 
         @Test func customInlineSnapshot_SingleTrailingClosure() async throws {
+            // swift-format-ignore: OnlyOneTrailingClosureArgument
             try assertCustomInlineSnapshot(of: { "Hello" }) {
                 """
                 "Hello"
@@ -102,6 +103,7 @@ extension BaseSuite {
         }
 
         @Test func customInlineSnapshot_MultilineSingleTrailingClosure() async throws {
+            // swift-format-ignore: OnlyOneTrailingClosureArgument
             try assertCustomInlineSnapshot(
                 of: { "Hello" }
             ) {

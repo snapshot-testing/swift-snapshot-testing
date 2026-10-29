@@ -24,7 +24,6 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
         line: UInt,
         column: UInt
     ) {
-        #if swift(>=6.2)
         for attachment in attachments {
             guard let payload = attachment.payload else {
                 continue
@@ -37,8 +36,8 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
                 attachmentName = attachment.uniformTypeIdentifier
             }
 
-            Attachment<Data>.record(
-                payload,
+            Attachment.record(
+                Array(payload),
                 named: attachmentName,
                 sourceLocation: SourceLocation(
                     fileID: String(describing: fileID),
@@ -48,7 +47,6 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
                 )
             )
         }
-        #endif
     }
 
     public func record(

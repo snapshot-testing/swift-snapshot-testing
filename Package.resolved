@@ -1,13 +1,13 @@
 {
-  "originHash" : "bf348d2b48f66bc8514885c7e58da2b537704e6749ef6d07b94f4c5cd1937351",
+  "originHash" : "d270fa88c471886439ed41bbcf91077f67c118b73678f72f917d53aa2d1227f7",
   "pins" : [
     {
       "identity" : "swift-async-stream",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/o-nnerb/swift-async-stream",
       "state" : {
-        "revision" : "ad43039741c89faf02234e2c952d08062e53d6d5",
-        "version" : "1.3.2"
+        "revision" : "0916a533e6edfaecf4d8e2a2cb61443ae5df73a8",
+        "version" : "2.1.4"
       }
     },
     {
@@ -15,8 +15,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-custom-dump",
       "state" : {
-        "revision" : "2a2a938798236b8fa0bc57c453ee9de9f9ec3ab0",
-        "version" : "1.4.1"
+        "revision" : "4fb9e7cbb4b8f5a7354005db39447f570d6b3e19",
+        "version" : "1.7.3"
+      }
+    },
+    {
+      "identity" : "swift-issue-reporting",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
+      "state" : {
+        "revision" : "b23bb4493c439d3e05152bc167014235ba3d47fc",
+        "version" : "2.1.2"
       }
     },
     {
@@ -24,26 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax",
       "state" : {
-        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
-        "version" : "601.0.1"
-      }
-    },
-    {
-      "identity" : "xc-snapshot-testing",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/snapshot-testing/xc-snapshot-testing",
-      "state" : {
-        "revision" : "3a02c30e3c1289c2968dd227e47082b43d09792e",
-        "version" : "1.2.0"
-      }
-    },
-    {
-      "identity" : "xctest-dynamic-overlay",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
-      "state" : {
-        "revision" : "b2ed9eabefe56202ee4939dd9fc46b6241c88317",
-        "version" : "1.6.1"
+        "revision" : "050f1a346fbbac0ca2cfb15a95274f7bd1cf0ccf",
+        "version" : "604.0.0"
       }
     }
   ],
