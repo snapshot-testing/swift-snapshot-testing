@@ -47,6 +47,18 @@ let package = Package(
             exclude: ["__Snapshots__"]
         ),
         .testTarget(
+            name: "SnapshotTestingCoreTests",
+            dependencies: ["SnapshotTesting"]
+        ),
+        .testTarget(
+            name: "InlineSnapshotTestingCoreTests",
+            dependencies: [
+                "InlineSnapshotTesting",
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+            ]
+        ),
+        .testTarget(
             name: "InlineSnapshotTestingTests",
             dependencies: ["InlineSnapshotTesting"]
         ),
