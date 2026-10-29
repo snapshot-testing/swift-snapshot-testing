@@ -43,8 +43,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SnapshotTestingTests",
-            dependencies: ["SnapshotTesting"],
-            exclude: ["__Snapshots__"]
+            dependencies: ["SnapshotTesting"]
         ),
         .testTarget(
             name: "SnapshotTestingCoreTests",
