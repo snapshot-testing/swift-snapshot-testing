@@ -84,7 +84,17 @@ struct ImageAttachmentTests {
         }
     }
 
-    @Test func aToleranceLetsSmallDifferencesPass() throws {
+    /// The visionOS simulator cannot render Core Image filters, so a tolerance cannot be measured there.
+    private nonisolated static var perceptualComparisonIsAvailable: Bool {
+        #if os(visionOS)
+        false
+        #else
+        true
+        #endif
+    }
+
+    @Test(.enabled(if: perceptualComparisonIsAvailable))
+    func aToleranceLetsSmallDifferencesPass() throws {
         let directory = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
 
