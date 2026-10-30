@@ -36,14 +36,18 @@ final class SnapshotRewriter: SyntaxRewriter {
     override func visit(_ functionCallExpr: FunctionCallExprSyntax) -> ExprSyntax {
         let location = functionCallExpr.calledExpression
             .endLocation(converter: self.sourceLocationConverter, afterTrailingTrivia: true)
-        let snapshots = self.snapshots.prefix { snapshot in
+
+        // A snapshot that never finds its call must not hold back the ones that come after it.
+        let isAtLocation: (InlineSnapshot) -> Bool = { snapshot in
             Int(snapshot.line) == location.line && Int(snapshot.column) == location.column
         }
+
+        let snapshots = self.snapshots.filter(isAtLocation)
 
         guard !snapshots.isEmpty
         else { return super.visit(functionCallExpr) }
 
-        defer { self.snapshots.removeFirst(snapshots.count) }
+        defer { self.snapshots.removeAll(where: isAtLocation) }
 
         var functionCallExpr = functionCallExpr
         for snapshot in snapshots {

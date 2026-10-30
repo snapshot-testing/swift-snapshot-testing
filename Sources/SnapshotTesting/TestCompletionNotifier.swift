@@ -72,17 +72,35 @@ private nonisolated(nonsending) func withTestCompletionTracking<R: Sendable>(
         return try await operation()
     }
 
+    let notifier = TestCompletionNotifier(test.sourceLocation)
+
+    // The notification is posted when the scope ends, not when the last reference to the notifier
+    // goes away: tasks that inherit the task-local would otherwise delay (or lose) the flush.
+    defer { notifier.finish() }
+
     return try await TestCompletionNotifier.$current.withValue(
-        TestCompletionNotifier(test.sourceLocation),
+        notifier,
         operation: operation,
         file: file,
         line: line
     )
 }
 
+/// The key of the identifier of the scope that finished, in the notification `userInfo`.
+@_spi(Internals)
+public let kTestScopeID = "kTestScopeID"
+
+/// The identifier of the `@Suite(.finalizeSnapshots)` scope the current test runs in, if any.
+@_spi(Internals)
+public var currentTestCompletionScopeID: UUID? {
+    TestCompletionNotifier.current?.id
+}
+
 final class TestCompletionNotifier: Sendable {
 
     @TaskLocal static var current: TestCompletionNotifier?
+
+    let id = UUID()
 
     private let sourceLocation: SourceLocation
 
@@ -90,12 +108,13 @@ final class TestCompletionNotifier: Sendable {
         self.sourceLocation = sourceLocation
     }
 
-    deinit {
+    fileprivate func finish() {
         NotificationCenter.default.post(
             name: SwiftTestingDidFinishNotification,
             object: nil,
             userInfo: [
-                kTestFileName: sourceLocation.fileName
+                kTestFileName: sourceLocation.fileName,
+                kTestScopeID: id,
             ]
         )
     }

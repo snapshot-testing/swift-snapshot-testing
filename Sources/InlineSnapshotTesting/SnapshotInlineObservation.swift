@@ -3,6 +3,9 @@
 
 import Foundation
 @_spi(Internals) import XCSnapshotTesting
+#if canImport(Testing)
+@_spi(Internals) import SnapshotTesting
+#endif
 
 final class SnapshotInlineObservation: @unchecked Sendable {
 
@@ -43,10 +46,12 @@ final class SnapshotInlineObservation: @unchecked Sendable {
     }
 
     private func swiftTestDidFinish(_ notification: Notification) {
-        guard let testName = notification.userInfo?[kTestFileName] as? String else {
+        #if canImport(Testing)
+        guard let scope = notification.userInfo?[kTestScopeID] as? UUID else {
             return
         }
 
-        InlineSnapshotManager.current.writeInlineSnapshots(for: testName)
+        InlineSnapshotManager.current.writeInlineSnapshots(scope: scope)
+        #endif
     }
 }

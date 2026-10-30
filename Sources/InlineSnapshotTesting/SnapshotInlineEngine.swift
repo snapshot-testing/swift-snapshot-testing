@@ -5,6 +5,9 @@
 import SwiftSyntax
 import Foundation
 @_spi(Internals) import XCSnapshotTesting
+#if canImport(Testing)
+@_spi(Internals) import SnapshotTesting
+#endif
 
 struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Executor.Output: BytesRepresentable {
 
@@ -33,7 +36,13 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         for filePath: StaticString,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
     ) throws -> URL {
-        try InlineSnapshotManager.current.registerTestSource(.init(path: filePath))
+        #if canImport(Testing)
+        let scope = currentTestCompletionScopeID
+        #else
+        let scope: UUID? = nil
+        #endif
+
+        try InlineSnapshotManager.current.registerTestSource(.init(path: filePath), scope: scope)
 
         return URL(
             fileURLWithPath: String(describing: filePath),
