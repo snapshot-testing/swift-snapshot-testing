@@ -1,5 +1,5 @@
 {
-  "originHash" : "6bc9e68f01b53fdf452d877710e73b6956f34033cae9b1b9e4a38853d6b40344",
+  "originHash" : "e7698cef42c63b7168af6e4aed060309f40ef9758c530a43ba62fbf3130aa4e5",
   "pins" : [
     {
       "identity" : "swift-async-stream",
@@ -35,6 +35,15 @@
       "state" : {
         "revision" : "050f1a346fbbac0ca2cfb15a95274f7bd1cf0ccf",
         "version" : "604.0.0"
+      }
+    },
+    {
+      "identity" : "xc-snapshot-testing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/snapshot-testing/xc-snapshot-testing",
+      "state" : {
+        "revision" : "fc0665f32fe07d40794160452ec6a355f2df2ee8",
+        "version" : "2.0.0"
       }
     }
   ],
