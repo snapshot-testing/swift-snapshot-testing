@@ -9,6 +9,7 @@ on:
       - 'Tests/**'
       - '.swift-format'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
     paths:
       - 'Package.swift'
@@ -56,7 +57,17 @@ jobs:
       force-skip-breaking-changes: ${{ contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
 
       # Step 4 – Apple
+      enable-apple-tests: true
+      package-name: "swift-snapshot-testing-Package"
       xcode-version: '27.1'
+      apple-tests-max-parallelization-width: '2'
+      apple-tests-parallel-testing-worker-count: '2'
+      apple-tests-timeout-minutes: 45
+      apple-coverage-enabled: true
+
+      # Step 4 – Third Party
+      enable-third-party-tests: true
+      third-party-coverage-enabled: true
 
       # Step 4 – Release Builds (build only)
       enable-release-builds: true
@@ -71,7 +82,6 @@ jobs:
       # FoundationEssentials only, and this one needs the full Foundation (through
       # xc-snapshot-testing) and a test framework.
 
-      # Apple / third-party tests are intentionally disabled until the test
-      # suites are rewritten; re-enable enable-apple-tests and
-      # enable-third-party-tests (plus enable-coverage-upload) then.
+      # Step 5 – Coverage Upload (uses the CODECOV_TOKEN secret of the repository)
+      enable-coverage-upload: true
     secrets: inherit
