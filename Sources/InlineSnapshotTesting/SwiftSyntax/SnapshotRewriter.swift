@@ -7,13 +7,9 @@ import SwiftSyntax
 final class SnapshotRewriter: SyntaxRewriter {
 
     let file: SnapshotURL
-    var function: String?
     let indent: String
-    let line: UInt?
-    var newRecordings: [(snapshot: InlineSnapshot, line: UInt)] = []
     var snapshots: [InlineSnapshot]
     let sourceLocationConverter: SourceLocationConverter
-    let wasRecording: Bool
 
     init(
         file: SnapshotURL,
@@ -21,8 +17,6 @@ final class SnapshotRewriter: SyntaxRewriter {
         sourceLocationConverter: SourceLocationConverter
     ) {
         self.file = file
-        self.line = snapshots.first?.line
-        self.wasRecording = snapshots.contains(where: \.wasRecording)
         self.indent = String(
             sourceLocationConverter.sourceLines
                 .first { $0.first?.isWhitespace == true && $0.contains { !$0.isWhitespace } }?
@@ -55,10 +49,6 @@ final class SnapshotRewriter: SyntaxRewriter {
 
             // A value that is not text cannot be written inline; the existing closure stays as is.
             guard let diffable = String(data: snapshot.diffable, encoding: .utf8) else { continue }
-
-            self.function =
-                self.function
-                ?? functionCallExpr.calledExpression.as(DeclReferenceExprSyntax.self)?.baseName.text
 
             let leadingTrivia = String(
                 self.sourceLocationConverter.sourceLines[Int(snapshot.line) - 1]
@@ -115,7 +105,7 @@ final class SnapshotRewriter: SyntaxRewriter {
 
             let trailingClosureOffset =
                 firstTrailingClosureOffset
-                + snapshot.closureDescriptor.trailingClosureOffset
+                + max(0, snapshot.closureDescriptor.trailingClosureOffset)
 
             let centeredTrailingClosureOffset = trailingClosureOffset - arguments.count
 

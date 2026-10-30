@@ -5,7 +5,6 @@ import Foundation
 @_spi(Internals) import XCSnapshotTesting
 
 #if canImport(SwiftSyntax601)
-@_spi(Internals) import XCSnapshotTesting
 import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxBuilder
@@ -179,16 +178,18 @@ public func assertInline<Input, Output: BytesRepresentable>(
     }
 }
 #else
-@available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 509.0.0")
+@available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 601.0.0")
 public func assertInline<Input: Sendable, Output: BytesRepresentable>(
-    of value: @autoclosure @Sendable () throws -> Input,
+    of value: @autoclosure @Sendable () async throws -> Input,
     as snapshot: AsyncSnapshot<Input, Output>,
     message: @autoclosure @escaping @Sendable () -> String = "",
     record: RecordMode? = nil,
     timeout: TimeInterval = 5,
+    name: String? = nil,
     serialization: DataSerialization = DataSerialization(),
     closureDescriptor: SnapshotClosureDescriptor = SnapshotClosureDescriptor(),
     matches expected: (@Sendable () -> Output.RawValue)? = nil,
+    isolation: isolated Actor? = #isolation,
     fileID: StaticString = #fileID,
     file filePath: StaticString = #filePath,
     function: StaticString = #function,
@@ -198,13 +199,14 @@ public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     fatalError()
 }
 
-@available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 509.0.0")
+@available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 601.0.0")
 public func assertInline<Input, Output: BytesRepresentable>(
     of value: @autoclosure @Sendable () throws -> Input,
     as snapshot: SyncSnapshot<Input, Output>,
     message: @autoclosure @escaping @Sendable () -> String = "",
     record: RecordMode? = nil,
     timeout: TimeInterval = 5,
+    name: String? = nil,
     serialization: DataSerialization = DataSerialization(),
     closureDescriptor: SnapshotClosureDescriptor = SnapshotClosureDescriptor(),
     matches expected: (@Sendable () -> Output.RawValue)? = nil,

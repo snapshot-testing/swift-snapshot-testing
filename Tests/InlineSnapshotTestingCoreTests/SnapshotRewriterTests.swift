@@ -180,6 +180,16 @@ struct SnapshotRewriterTests {
         #expect(result == source)
     }
 
+    @Test func aNegativeOffsetIsTreatedAsZero() {
+        let source = "func test() {\n    assertInline { \"x\" }\n}"
+        let descriptor = SnapshotClosureDescriptor(trailingClosureOffset: -3)
+
+        let result = Harness.rewrite(source, Harness.Snapshot(reference: nil, descriptor: descriptor))
+
+        #expect(result.contains("new"))
+        #expect(!result.contains("matches:"))
+    }
+
     // MARK: - Several closures
 
     @Test func aSecondClosureIsAppendedWhenTheOffsetPointsPastTheExistingOnes() {
