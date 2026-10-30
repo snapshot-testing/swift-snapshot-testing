@@ -18,7 +18,7 @@ extension Trait where Self == MaxConcurrentTestsTrait {
     /// Use this trait to control the level of parallelism during test execution, which is helpful for tests that are not thread-safe
     /// or when you want to limit resource consumption. When applied to a suite, the limit is enforced recursively for all contained tests and nested suites.
     ///
-    /// - Parameter maxConcurrentTests: The maximum number of tests allowed to execute simultaneously. Must be greater than zero.
+    /// - Parameter maxConcurrentTests: The maximum number of tests allowed to execute simultaneously. Values lower than one are treated as one.
     /// - Returns: A trait that constrains the test or suite's concurrency.
     ///
     /// Example:
@@ -27,7 +27,7 @@ extension Trait where Self == MaxConcurrentTestsTrait {
     /// struct MySuite { ... }
     /// ```
     public static func maxConcurrentTests(_ maxConcurrentTests: Int) -> Self {
-        .init(maxConcurrentTests: maxConcurrentTests)
+        .init(maxConcurrentTests: max(1, maxConcurrentTests))
     }
 }
 #endif

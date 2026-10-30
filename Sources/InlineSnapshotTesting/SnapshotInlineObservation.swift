@@ -28,14 +28,14 @@ final class SnapshotInlineObservation: @unchecked Sendable {
             _xcObserver = NotificationCenter.default.addObserver(
                 forName: XCTestBundleDidFinishNotification,
                 object: nil,
-                queue: .current,
+                queue: nil,
                 using: { [weak self] in self?.xcTestDidFinish($0) }
             )
 
             _swiftTestingObserver = NotificationCenter.default.addObserver(
                 forName: SwiftTestingDidFinishNotification,
                 object: nil,
-                queue: .current,
+                queue: nil,
                 using: { [weak self] in self?.swiftTestDidFinish($0) }
             )
         }

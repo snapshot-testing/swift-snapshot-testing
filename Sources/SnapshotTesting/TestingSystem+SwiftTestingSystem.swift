@@ -46,8 +46,8 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
                 sourceLocation: SourceLocation(
                     fileID: String(describing: fileID),
                     filePath: String(describing: filePath),
-                    line: Int(line),
-                    column: Int(column)
+                    line: max(1, Int(clamping: line)),
+                    column: max(1, Int(clamping: column))
                 )
             )
         }
@@ -65,8 +65,8 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
             sourceLocation: SourceLocation(
                 fileID: String(describing: fileID),
                 filePath: String(describing: filePath),
-                line: Int(line),
-                column: Int(column)
+                line: max(1, Int(clamping: line)),
+                column: max(1, Int(clamping: column))
             )
         )
     }

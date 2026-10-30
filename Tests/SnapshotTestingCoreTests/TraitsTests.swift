@@ -28,6 +28,11 @@ struct TraitsTests {
         #expect(environment.maxConcurrentTests == 2)
     }
 
+    @Test(.maxConcurrentTests(0))
+    func aLimitBelowOneIsTreatedAsOne() {
+        #expect(environment.maxConcurrentTests == 1)
+    }
+
     @Test(.platform("custom-platform"))
     func thePlatformTraitSetsThePlatform() {
         #expect(environment.platform == "custom-platform")

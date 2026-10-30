@@ -47,7 +47,7 @@ final class SnapshotVisitor: SyntaxVisitor {
 
         let trailingClosureOffset =
             firstTrailingClosureOffset
-            + self.closureDescriptor.trailingClosureOffset
+            + max(0, self.closureDescriptor.trailingClosureOffset)
 
         let centeredTrailingClosureOffset = trailingClosureOffset - arguments.count
 

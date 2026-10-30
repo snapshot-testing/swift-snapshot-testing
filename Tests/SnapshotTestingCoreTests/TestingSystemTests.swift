@@ -37,6 +37,20 @@ struct TestingSystemTests {
         }
     }
 
+    @Test func aZeroLineOrColumnDoesNotTrap() throws {
+        try withKnownIssue {
+            try TestingSystem.shared.record(
+                message: "no position",
+                fileID: #fileID,
+                filePath: #filePath,
+                line: 0,
+                column: 0
+            )
+        } matching: {
+            $0.comments.first?.rawValue == "no position"
+        }
+    }
+
     @Test func attachmentsAreRecordedWithTheirNames() {
         TestingSystem.shared.add(
             "Attached",

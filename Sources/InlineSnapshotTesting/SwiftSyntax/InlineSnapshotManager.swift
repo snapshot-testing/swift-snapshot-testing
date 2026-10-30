@@ -49,7 +49,7 @@ final class InlineSnapshotManager: @unchecked Sendable {
             if _testSourceCache[url] == nil {
                 let path = String(describing: url.path)
 
-                let source = try String(contentsOfFile: path)
+                let source = try String(contentsOfFile: path, encoding: .utf8)
 
                 let sourceFile = Parser.parse(source: source)
 
@@ -206,7 +206,7 @@ final class InlineSnapshotManager: @unchecked Sendable {
         // would silently drop those changes.
         let expectedOnDisk = _writtenSources[url] ?? testSource.source
         guard
-            let onDisk = try? String(contentsOfFile: String(describing: url.path)),
+            let onDisk = try? String(contentsOfFile: String(describing: url.path), encoding: .utf8),
             onDisk == expectedOnDisk
         else {
             _report(
