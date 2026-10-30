@@ -41,7 +41,7 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
             }
 
             Attachment.record(
-                payload,
+                Array(payload),
                 named: attachmentName,
                 sourceLocation: SourceLocation(
                     fileID: String(describing: fileID),
