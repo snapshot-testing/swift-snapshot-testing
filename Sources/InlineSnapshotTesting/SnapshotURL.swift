@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 struct SnapshotURL: Sendable, Hashable {
 
     let path: StaticString

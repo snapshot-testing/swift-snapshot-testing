@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if canImport(SwiftSyntax601)
 import SwiftSyntax
 import Foundation
