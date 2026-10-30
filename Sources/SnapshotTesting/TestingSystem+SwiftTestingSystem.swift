@@ -1,6 +1,7 @@
 // Copyright (c) Snapshot Testing
 // SPDX-License-Identifier: MIT
 
+#if canImport(Testing)
 import Foundation
 import Testing
 @_spi(Internals) import XCSnapshotTesting
@@ -111,3 +112,4 @@ extension Array where Element == any Trait {
         return environment
     }
 }
+#endif

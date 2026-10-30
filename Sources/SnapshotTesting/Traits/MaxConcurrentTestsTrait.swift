@@ -1,6 +1,7 @@
 // Copyright (c) Snapshot Testing
 // SPDX-License-Identifier: MIT
 
+#if canImport(Testing)
 import Foundation
 import Testing
 @_spi(Internals) import XCSnapshotTesting
@@ -29,3 +30,4 @@ extension Trait where Self == MaxConcurrentTestsTrait {
         .init(maxConcurrentTests: maxConcurrentTests)
     }
 }
+#endif
