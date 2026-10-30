@@ -5,6 +5,16 @@
 import SwiftSyntax
 import Foundation
 @_spi(Internals) import XCSnapshotTesting
+#if canImport(Testing)
+@_spi(Internals) import SnapshotTesting
+#endif
+
+/// Thrown instead of trapping, so a missing trait only fails the test that forgot it.
+struct MissingFinalizeSnapshotsError: Error, CustomStringConvertible {
+    var description: String {
+        "To run InlineSnapshotTesting on Swift Testing, you need to add @Suite(.finalizeSnapshots)"
+    }
+}
 
 struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Executor.Output: BytesRepresentable {
 
@@ -16,13 +26,12 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         expected: (@Sendable () -> Executor.Output.RawValue)?,
         message: @Sendable @escaping () -> String,
         closureDescriptor: SnapshotClosureDescriptor
-    ) {
+    ) throws {
         SnapshotInlineObservation.shared.registerIfNeeded()
-        if TestingSystem.shared.isSwiftTestingRunning {
-            precondition(
-                TestingSystem.shared.isSwiftTestingCompletionAttached,
-                "To run InlineSnapshotTesting on Swift Testing, you need to add @Suite(.finalizeSnapshots)"
-            )
+        if TestingSystem.shared.isSwiftTestingRunning,
+            !TestingSystem.shared.isSwiftTestingCompletionAttached
+        {
+            throw MissingFinalizeSnapshotsError()
         }
         self.expected = expected
         self.message = message
@@ -33,7 +42,13 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         for filePath: StaticString,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
     ) throws -> URL {
-        try InlineSnapshotManager.current.registerTestSource(.init(path: filePath))
+        #if canImport(Testing)
+        let scope = currentTestCompletionScopeID
+        #else
+        let scope: UUID? = nil
+        #endif
+
+        try InlineSnapshotManager.current.registerTestSource(.init(path: filePath), scope: scope)
 
         return URL(
             fileURLWithPath: String(describing: filePath),
@@ -58,11 +73,15 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         from url: URL,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
     ) throws -> Executor.Output {
-        if InlineSnapshotManager.current.recordExists(at: url) {
+        // The inline literal is the reference whenever there is one. A record only stands in for it
+        // when the literal is missing, and it must not replace it: the same call can run again (in a
+        // loop or a parameterized test) and a record holds what an earlier run produced, not what
+        // the test expects.
+        if let expected {
+            return Executor.Output(rawValue: expected())
+        } else if InlineSnapshotManager.current.recordExists(at: url) {
             let snapshot = try InlineSnapshotManager.current.record(at: url)
             return try tester.serialization.deserialize(Executor.Output.self, from: snapshot.diffable)
-        } else if let expected {
-            return Executor.Output(rawValue: expected())
         } else {
             throw URLError(.fileDoesNotExist)
         }

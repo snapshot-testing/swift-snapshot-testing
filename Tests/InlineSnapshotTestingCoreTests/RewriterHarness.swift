@@ -41,6 +41,16 @@ enum RewriterHarness {
         var callIndex = 0
     }
 
+    /// Where each call to `name` ends in `source`, in source order.
+    static func callLocations(in source: String, call name: String = "assertInline") -> [(line: Int, column: Int)] {
+        let sourceFile = Parser.parse(source: source)
+        let converter = SourceLocationConverter(fileName: "Test.swift", tree: sourceFile)
+
+        let finder = CallFinder(name: name, converter: converter)
+        finder.walk(sourceFile)
+        return finder.locations
+    }
+
     static func rewrite(_ source: String, call name: String = "assertInline", _ snapshots: Snapshot...) -> String {
         let sourceFile = Parser.parse(source: source)
         let converter = SourceLocationConverter(fileName: "Test.swift", tree: sourceFile)

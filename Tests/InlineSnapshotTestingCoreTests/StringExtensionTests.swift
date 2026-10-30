@@ -27,6 +27,14 @@ struct StringExtensionTests {
         #expect("a\\b".hashCount(isMultiline: true) == 1)
     }
 
+    @Test func hashesAfterABackslashNeedALongerDelimiter() {
+        // `\#(` would be an interpolation inside `#"""`, so the delimiter must be at least `##`.
+        #expect("C:\\#(dir)\\file".hashCount(isMultiline: true) == 2)
+        #expect("a\\##b".hashCount(isMultiline: true) == 3)
+        #expect("a\\#".hashCount(isMultiline: true) == 2)
+        #expect("a # b \\ c".hashCount(isMultiline: true) == 1)
+    }
+
     @Test func tripleQuotesNeedOneHash() {
         #expect("x \"\"\" y".hashCount(isMultiline: true) == 1)
     }

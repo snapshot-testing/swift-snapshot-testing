@@ -52,7 +52,7 @@ public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     line: UInt = #line,
     column: UInt = #column
 ) async throws {
-    let engine = SnapshotInlineEngine<XCSnapshotTesting.Async<Input, Output>>(
+    let engine = try SnapshotInlineEngine<XCSnapshotTesting.Async<Input, Output>>(
         expected: expected,
         message: message,
         closureDescriptor: closureDescriptor
@@ -136,7 +136,7 @@ public func assertInline<Input, Output: BytesRepresentable>(
     line: UInt = #line,
     column: UInt = #column
 ) throws {
-    let engine = SnapshotInlineEngine<Sync<Input, Output>>(
+    let engine = try SnapshotInlineEngine<Sync<Input, Output>>(
         expected: expected,
         message: message,
         closureDescriptor: closureDescriptor

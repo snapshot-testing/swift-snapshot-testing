@@ -36,20 +36,25 @@ final class SnapshotRewriter: SyntaxRewriter {
     override func visit(_ functionCallExpr: FunctionCallExprSyntax) -> ExprSyntax {
         let location = functionCallExpr.calledExpression
             .endLocation(converter: self.sourceLocationConverter, afterTrailingTrivia: true)
-        let snapshots = self.snapshots.prefix { snapshot in
+
+        // A snapshot that never finds its call must not hold back the ones that come after it.
+        let isAtLocation: (InlineSnapshot) -> Bool = { snapshot in
             Int(snapshot.line) == location.line && Int(snapshot.column) == location.column
         }
+
+        let snapshots = self.snapshots.filter(isAtLocation)
 
         guard !snapshots.isEmpty
         else { return super.visit(functionCallExpr) }
 
-        defer { self.snapshots.removeFirst(snapshots.count) }
+        defer { self.snapshots.removeAll(where: isAtLocation) }
 
         var functionCallExpr = functionCallExpr
         for snapshot in snapshots {
             guard snapshot.reference != snapshot.diffable, snapshot.wasRecording else { continue }
 
-            let diffable = String(data: snapshot.diffable, encoding: .utf8)
+            // A value that is not text cannot be written inline; the existing closure stays as is.
+            guard let diffable = String(data: snapshot.diffable, encoding: .utf8) else { continue }
 
             self.function =
                 self.function
@@ -61,14 +66,15 @@ final class SnapshotRewriter: SyntaxRewriter {
             )
             let delimiter = String(
                 repeating: "#",
-                count: (diffable ?? "").hashCount(isMultiline: true)
+                count: diffable.hashCount(isMultiline: true)
             )
             let leadingIndent = leadingTrivia + self.indent
             let snapshotLabel = TokenSyntax(
                 stringLiteral: snapshot.closureDescriptor.trailingClosureLabel
             )
-            let snapshotClosure = diffable.map { actual in
-                ClosureExprSyntax(
+            let snapshotClosure: ClosureExprSyntax = {
+                let actual = diffable
+                return ClosureExprSyntax(
                     leftBrace: .leftBraceToken(trailingTrivia: .newline),
                     statements: CodeBlockItemListSyntax {
                         StringLiteralExprSyntax(
@@ -96,7 +102,7 @@ final class SnapshotRewriter: SyntaxRewriter {
                         leadingTrivia: .newline + Trivia(stringLiteral: leadingTrivia)
                     )
                 )
-            }
+            }()
 
             let arguments = functionCallExpr.arguments
             let firstTrailingClosureOffset =
@@ -116,57 +122,31 @@ final class SnapshotRewriter: SyntaxRewriter {
             switch centeredTrailingClosureOffset {
             case ..<0:
                 let index = arguments.index(arguments.startIndex, offsetBy: trailingClosureOffset)
-                if let snapshotClosure {
-                    functionCallExpr.arguments[index].label = snapshotLabel
-                    functionCallExpr.arguments[index].expression = ExprSyntax(snapshotClosure)
-                } else {
-                    functionCallExpr.arguments.remove(at: index)
-                }
+                functionCallExpr.arguments[index].label = snapshotLabel
+                functionCallExpr.arguments[index].expression = ExprSyntax(snapshotClosure)
 
             case 0:
                 functionCallExpr.rightParen?.trailingTrivia = .space
                 let trailingClosureTrivia = functionCallExpr.trailingClosure?.trailingTrivia
-                if let snapshotClosure {
-                    // FIXME: ?? multipleTrailingClosures.removeFirst()
-                    functionCallExpr.trailingClosure =
-                        if let trailingClosureTrivia, trailingClosureTrivia.count > 0 {
-                            snapshotClosure.with(
-                                \.trailingTrivia,
-                                snapshotClosure.trailingTrivia + trailingClosureTrivia
-                            )
-                        } else {
-                            snapshotClosure
-                        }
-                } else if !functionCallExpr.additionalTrailingClosures.isEmpty {
-                    let additionalTrailingClosure = functionCallExpr.additionalTrailingClosures.remove(
-                        at: functionCallExpr.additionalTrailingClosures.startIndex
-                    )
-                    functionCallExpr.trailingClosure =
-                        if let trailingClosureTrivia, trailingClosureTrivia.count > 0 {
-                            additionalTrailingClosure.closure.with(
-                                \.trailingTrivia,
-                                additionalTrailingClosure.closure.trailingTrivia + trailingClosureTrivia
-                            )
-                        } else {
-                            additionalTrailingClosure.closure
-                        }
-                } else {
-                    functionCallExpr.rightParen?.trailingTrivia = ""
-                    functionCallExpr.trailingClosure = nil
-                }
-
-            case 1...:
-                var newElement: MultipleTrailingClosureElementSyntax? {
-                    snapshotClosure.map { snapshotClosure in
-                        MultipleTrailingClosureElementSyntax(
-                            label: snapshotLabel,
-                            closure: snapshotClosure.with(
-                                \.leadingTrivia,
-                                snapshotClosure.leadingTrivia + .space
-                            )
+                // FIXME: ?? multipleTrailingClosures.removeFirst()
+                functionCallExpr.trailingClosure =
+                    if let trailingClosureTrivia, trailingClosureTrivia.count > 0 {
+                        snapshotClosure.with(
+                            \.trailingTrivia,
+                            snapshotClosure.trailingTrivia + trailingClosureTrivia
                         )
+                    } else {
+                        snapshotClosure
                     }
-                }
+
+            default:
+                let newElement = MultipleTrailingClosureElementSyntax(
+                    label: snapshotLabel,
+                    closure: snapshotClosure.with(
+                        \.leadingTrivia,
+                        snapshotClosure.leadingTrivia + .space
+                    )
+                )
 
                 if !functionCallExpr.additionalTrailingClosures.isEmpty,
                     let endIndex = functionCallExpr.additionalTrailingClosures.index(
@@ -183,29 +163,25 @@ final class SnapshotRewriter: SyntaxRewriter {
                     if snapshot.closureDescriptor.contains(
                         functionCallExpr.additionalTrailingClosures[index].label.text
                     ) {
-                        if let snapshotClosure {
-                            functionCallExpr.additionalTrailingClosures[index].label = snapshotLabel
-                            let trailingTrivia = functionCallExpr.additionalTrailingClosures[index].closure
-                                .trailingTrivia
-                            functionCallExpr.additionalTrailingClosures[index].closure =
-                                if trailingTrivia.count > 0 {
-                                    snapshotClosure.with(
-                                        \.trailingTrivia,
-                                        snapshotClosure.trailingTrivia + trailingTrivia
-                                    )
-                                } else {
-                                    snapshotClosure
-                                }
-                        } else {
-                            functionCallExpr.additionalTrailingClosures.remove(at: index)
-                        }
-                    } else if let newElement {
+                        functionCallExpr.additionalTrailingClosures[index].label = snapshotLabel
+                        let trailingTrivia = functionCallExpr.additionalTrailingClosures[index].closure
+                            .trailingTrivia
+                        functionCallExpr.additionalTrailingClosures[index].closure =
+                            if trailingTrivia.count > 0 {
+                                snapshotClosure.with(
+                                    \.trailingTrivia,
+                                    snapshotClosure.trailingTrivia + trailingTrivia
+                                )
+                            } else {
+                                snapshotClosure
+                            }
+                    } else {
                         functionCallExpr.additionalTrailingClosures.insert(
                             newElement.with(\.trailingTrivia, .space),
                             at: index
                         )
                     }
-                } else if centeredTrailingClosureOffset >= 1, let newElement {
+                } else {
                     if let index = functionCallExpr.additionalTrailingClosures.index(
                         functionCallExpr.additionalTrailingClosures.endIndex,
                         offsetBy: -1,
@@ -216,12 +192,7 @@ final class SnapshotRewriter: SyntaxRewriter {
                         functionCallExpr.trailingClosure?.trailingTrivia = .space
                     }
                     functionCallExpr.additionalTrailingClosures.append(newElement)
-                } else {
-                    fatalError()
                 }
-
-            default:
-                fatalError()
             }
         }
 
