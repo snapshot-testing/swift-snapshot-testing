@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 @_spi(Internals) import XCSnapshotTesting
 
 /// A structure that describes the location of an inline snapshot.

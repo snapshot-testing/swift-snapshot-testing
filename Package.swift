@@ -1,14 +1,14 @@
-// swift-tools-version: 6.1
+// swift-tools-version: 6.4
 
 import PackageDescription
 
 let package = Package(
     name: "swift-snapshot-testing",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13),
-        .watchOS(.v6),
+        .iOS(.v15),
+        .macOS(.v12),
+        .tvOS(.v15),
+        .watchOS(.v9),
     ],
     products: [
         .library(
@@ -21,15 +21,16 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing", from: "1.2.0"),
-        .package(url: "https://github.com/swiftlang/swift-syntax", "601.0.0"..<"603.0.0"),
+        .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing", from: "2.0.0"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "603.0.0"..<"605.0.0"),
     ],
     targets: [
         .target(
             name: "SnapshotTesting",
             dependencies: [
-                .product(name: "XCSnapshotTesting", package: "xc-snapshot-testing"),
-            ]
+                .product(name: "XCSnapshotTesting", package: "xc-snapshot-testing")
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .target(
             name: "InlineSnapshotTesting",
@@ -39,16 +40,32 @@ let package = Package(
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "SnapshotTestingTests",
             dependencies: ["SnapshotTesting"],
-            exclude: ["__Snapshots__"]
+            swiftSettings: [.defaultIsolation(nil)]
+        ),
+        .testTarget(
+            name: "SnapshotTestingCoreTests",
+            dependencies: ["SnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
+        ),
+        .testTarget(
+            name: "InlineSnapshotTestingCoreTests",
+            dependencies: [
+                "InlineSnapshotTesting",
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "InlineSnapshotTestingTests",
-            dependencies: ["InlineSnapshotTesting"]
+            dependencies: ["InlineSnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
     ]
 )

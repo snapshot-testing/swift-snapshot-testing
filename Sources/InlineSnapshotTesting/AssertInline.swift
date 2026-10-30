@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 @_spi(Internals) import XCSnapshotTesting
 
@@ -23,7 +26,7 @@ import SwiftSyntaxBuilder
 ///   - serialization: The strategy used to serialize the snapshot data. Defaults to `DataSerialization()`.
 ///   - closureDescriptor: An optional descriptor describing the inline snapshot’s location. Typically not needed unless implementing custom helpers.
 ///   - expected: An optional closure that returns a previously generated snapshot value. When omitted, the expected value will be populated inline at the call site.
-///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.   
+///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.
 ///   - fileID: The file ID in which the assertion was called. Defaults to the file ID of the test case.
 ///   - filePath: The file path in which the assertion was called. Defaults to the file path of the test case.
 ///   - function: The function name in which the assertion was called. Defaults to the test method name.
