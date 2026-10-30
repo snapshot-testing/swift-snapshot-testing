@@ -6,6 +6,7 @@ import SwiftParser
 import SwiftSyntax
 import Testing
 
+@_spi(Internals) import XCSnapshotTesting
 @_spi(Internals) @testable import InlineSnapshotTesting
 
 /// The manager reads its file through a `StaticString` path, so the tests point it at a relative
@@ -147,6 +148,52 @@ struct InlineSnapshotManagerTests {
                 manager.writeInlineSnapshots(scope: scope)
             }
             #expect(try contents() == Self.source)
+        }
+    }
+
+    @Test
+    func aFileEditedMeanwhileIsNotOverwritten() throws {
+        try withSampleFile { manager in
+            let scope = UUID()
+            try manager.registerTestSource(.init(path: "Sample.swift"), scope: scope)
+
+            let (url, value) = snapshot(0, Self.multiline)
+            manager.write(value, to: url)
+
+            let edited = Self.source + "// edited in the editor\n"
+            try edited.write(toFile: "Sample.swift", atomically: true, encoding: .utf8)
+
+            withKnownIssue {
+                manager.writeInlineSnapshots(scope: scope)
+            }
+            #expect(try contents() == edited)
+        }
+    }
+
+    @Test
+    func aValueThatIsNotTextIsReportedAndLeftOut() throws {
+        try withSampleFile { manager in
+            let scope = UUID()
+            try manager.registerTestSource(.init(path: "Sample.swift"), scope: scope)
+
+            let (url, value) = snapshot(0, Data([0xFF, 0xFE]))
+            manager.write(value, to: url)
+
+            withKnownIssue {
+                manager.writeInlineSnapshots(scope: scope)
+            }
+            #expect(try contents() == Self.source)
+        }
+    }
+
+    @Test
+    func aSuiteWithoutTheTraitThrowsInsteadOfCrashing() {
+        #expect(throws: MissingFinalizeSnapshotsError.self) {
+            _ = try SnapshotInlineEngine<Sync<String, StringBytes>>(
+                expected: nil,
+                message: { "" },
+                closureDescriptor: SnapshotClosureDescriptor()
+            )
         }
     }
 

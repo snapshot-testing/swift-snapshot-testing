@@ -29,6 +29,9 @@ final class InlineSnapshotManager: @unchecked Sendable {
     /// What was last written to each file, so it is not rewritten with the same contents.
     private var _writtenSources: [SnapshotURL: String] = [:]
 
+    /// The problems already reported, so a file that is flushed again is not reported twice.
+    private var _reportedProblems: Set<String> = []
+
     fileprivate init() {}
 
     subscript(_ url: SnapshotURL) -> TestSource? {
@@ -105,6 +108,7 @@ final class InlineSnapshotManager: @unchecked Sendable {
 
             _pendingScopes.removeAll()
             _writtenSources.removeAll()
+            _reportedProblems.removeAll()
         }
     }
 
@@ -166,6 +170,15 @@ final class InlineSnapshotManager: @unchecked Sendable {
             return
         }
 
+        for snapshot in snapshots
+        where snapshot.wasRecording && String(data: snapshot.diffable, encoding: .utf8) == nil {
+            _report(
+                "The snapshot of \(snapshot.function) is not valid UTF-8 text and was not written inline.",
+                at: url,
+                line: snapshot.line
+            )
+        }
+
         let snapshotRewriter = SnapshotRewriter(
             file: url,
             snapshots: snapshots.sorted {
@@ -189,6 +202,21 @@ final class InlineSnapshotManager: @unchecked Sendable {
             return
         }
 
+        // Another process or an editor may have saved the file since it was read; overwriting it
+        // would silently drop those changes.
+        let expectedOnDisk = _writtenSources[url] ?? testSource.source
+        guard
+            let onDisk = try? String(contentsOfFile: String(describing: url.path)),
+            onDisk == expectedOnDisk
+        else {
+            _report(
+                "The file changed since it was read, so the inline snapshots were not written to it.",
+                at: url,
+                line: snapshots.first?.line ?? 1
+            )
+            return
+        }
+
         do {
             try updatedSource.write(
                 toFile: String(describing: url.path),
@@ -197,17 +225,24 @@ final class InlineSnapshotManager: @unchecked Sendable {
             )
             _writtenSources[url] = updatedSource
         } catch {
-            let message = "Could not write the inline snapshots to \(url.path): \(error)"
-            FileHandle.standardError.write(Data((message + "\n").utf8))
-
-            try? TestingSystem.shared.record(
-                message: message,
-                fileID: #fileID,
-                filePath: url.path,
-                line: max(snapshots.first?.line ?? 1, 1),
-                column: 1
-            )
+            _report("Could not write the inline snapshots: \(error)", at: url, line: snapshots.first?.line ?? 1)
         }
+    }
+
+    private func _report(_ message: String, at url: SnapshotURL, line: UInt) {
+        guard _reportedProblems.insert("\(url.path): \(message)").inserted else {
+            return
+        }
+
+        FileHandle.standardError.write(Data("\(url.path): \(message)\n".utf8))
+
+        try? TestingSystem.shared.record(
+            message: message,
+            fileID: #fileID,
+            filePath: url.path,
+            line: max(line, 1),
+            column: 1
+        )
     }
 
     deinit {

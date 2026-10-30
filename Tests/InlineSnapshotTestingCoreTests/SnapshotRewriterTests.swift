@@ -171,13 +171,13 @@ struct SnapshotRewriterTests {
 
     // MARK: - Removing the closure
 
-    @Test func aValueThatIsNotTextRemovesTheClosure() {
+    @Test func aValueThatIsNotTextLeavesTheClosureAlone() {
         let source =
             "func test() {\n    assertInline(of: \"x\") {\n        \"\"\"\n        old\n        \"\"\"\n    }\n}"
 
         let result = Harness.rewrite(source, Harness.Snapshot(diffable: Data([0xFF, 0xFE])))
 
-        #expect(result == "func test() {\n    assertInline(of: \"x\")\n}")
+        #expect(result == source)
     }
 
     // MARK: - Several closures
