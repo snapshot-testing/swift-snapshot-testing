@@ -29,7 +29,8 @@ let package = Package(
             name: "SnapshotTesting",
             dependencies: [
                 .product(name: "XCSnapshotTesting", package: "xc-snapshot-testing")
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .target(
             name: "InlineSnapshotTesting",
@@ -39,15 +40,18 @@ let package = Package(
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "SnapshotTestingTests",
-            dependencies: ["SnapshotTesting"]
+            dependencies: ["SnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "SnapshotTestingCoreTests",
-            dependencies: ["SnapshotTesting"]
+            dependencies: ["SnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "InlineSnapshotTestingCoreTests",
@@ -55,11 +59,13 @@ let package = Package(
                 "InlineSnapshotTesting",
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "InlineSnapshotTestingTests",
-            dependencies: ["InlineSnapshotTesting"]
+            dependencies: ["InlineSnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
     ]
 )
