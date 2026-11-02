@@ -5,12 +5,13 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @_spi(Internals) import XCSnapshotTesting
+
 @_spi(Internals) @testable import InlineSnapshotTesting
 
 /// The manager reads its file through a `StaticString` path, so the tests point it at a relative
-/// path and run from a temporary directory. They must not overlap.
+/// path and run from a temporary directory. They must not overlap, and no other test of this target
+/// may rely on the current directory, because `.serialized` only orders the tests of this suite.
 @Suite("Inline snapshot manager", .serialized)
 struct InlineSnapshotManagerTests {
 
@@ -128,7 +129,12 @@ struct InlineSnapshotManagerTests {
         }
     }
 
-    @Test
+    /// A superuser writes to a directory without write permission, so there would be no failure.
+    private static var canBeDeniedWriteAccess: Bool {
+        geteuid() != 0
+    }
+
+    @Test(.enabled(if: InlineSnapshotManagerTests.canBeDeniedWriteAccess))
     func aFailedWriteIsReportedInsteadOfCrashing() throws {
         try withSampleFile { manager in
             let scope = UUID()

@@ -1,28 +1,41 @@
 # ``SnapshotTesting``
 
-Powerfully flexible snapshot testing.
+Snapshot testing for Swift Testing, with the same assertions working in XCTest.
+
+## Overview
+
+SnapshotTesting re-exports `XCSnapshotTesting`, which provides the assertions (`assert(of:as:)`)
+and the snapshot strategies (`.image`, `.lines`, `.json`, `.customDump` and more), and adds the
+Swift Testing traits that configure them.
+
+```swift
+import SnapshotTesting
+import Testing
+
+@Suite(.record(.missing), .diffTool(.ksdiff))
+struct FeatureTests {
+
+    @Test
+    func rendersTheFeature() async throws {
+        try await assert(of: FeatureView(), as: .image)
+    }
+}
+```
 
 ## Topics
 
 ### Essentials
 
-- ``assertSnapshot(of:as:named:record:timeout:file:testName:line:)``
 - <doc:IntegratingWithTestFrameworks>
-- <doc:MigrationGuides>
-
-### Strategies
-
 - <doc:CustomStrategies>
-- ``Snapshotting``
-- ``Diffing``
-- ``Async``
 
-### Configuration
+### Configuring tests
 
-- ``Testing/Trait/snapshots(diffTool:record:)``
-- ``withSnapshotTesting(record:diffTool:operation:)-2kuyr``
-- ``SnapshotTestingConfiguration``
+- ``RecordTrait``
+- ``DiffToolTrait``
+- ``MaxConcurrentTestsTrait``
+- ``PlatformTrait``
 
-### Deprecations
+### Inline snapshots
 
-- <doc:SnapshotTestingDeprecations>
+- ``FinalizeSnapshotsSuiteTrait``

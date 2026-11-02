@@ -9,15 +9,12 @@ A Swift library that provides Traits and methods for implementing snapshot testi
 
 ## Features
 
-- **Swift Testing Framework Integration**: Built specifically for Swift's `Testing` framework
-- **Traits Implementation**: Provides Traits for snapshot testing capabilities
-- **Multiple Output Formats**: Support for image snapshots, string diffs, JSON, and more
-- **Flexible Configuration**: Customize precision, naming, and comparison strategies
-- **SwiftUI Support**: First-class support for testing SwiftUI views
-- **UIKit Support**: Comprehensive testing for UIKit components
-- **Cross-Platform**: Works across iOS, macOS, tvOS, and watchOS
-- **Performance Optimized**: Efficient snapshot comparison algorithms
-- **Developer Friendly**: Clear error messages and debugging tools
+- **Swift Testing integration**: traits to configure a test or a whole suite, and failures reported through `Issue.record`
+- **XCTest support**: the same assertions work in an `XCTestCase`
+- **Multiple output formats**: images, text lines, JSON, property lists, custom dumps and more
+- **Inline snapshots**: `assertInline` writes the expected value into the test file
+- **SwiftUI and UIKit/AppKit**: snapshot views and view controllers
+- **Cross-platform**: iOS, macOS, tvOS and watchOS
 
 ## Installation
 
@@ -25,9 +22,11 @@ SnapshotTesting can be installed using Swift Package Manager. To include it in y
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/snapshot-testing/swift-snapshot-testing", from: "1.0.0")
+    .package(url: "https://github.com/snapshot-testing/swift-snapshot-testing", from: "2.0.0")
 ]
 ```
+
+The package has two products: `SnapshotTesting` and `InlineSnapshotTesting`.
 
 ## Usage
 
@@ -45,25 +44,52 @@ func testMyView() async throws {
 }
 ```
 
-### Available Traits
+### Traits
 
-The library provides various Traits for different snapshot testing needs:
+Traits configure the assertions of a test or of a whole suite. They apply recursively, and the closest one wins:
 
-- `SnapshotTestingTrait` - Main trait for snapshot testing capabilities
-- `ImageSnapshotTrait` - For capturing image-based snapshots
-- `StringSnapshotTrait` - For capturing string-based snapshots
-- `JSONSnapshotTrait` - For capturing JSON-based snapshots
+- `.record(_:)` - when references are written: `.missing` (the default), `.failed`, `.all` or `.never`
+- `.diffTool(_:)` - the command printed in a failure to open a diff, such as `.ksdiff`
+- `.maxConcurrentTests(_:)` - how many snapshots may use a window at the same time
+- `.platform(_:)` - a platform name added to the reference path
+- `.finalizeSnapshots` - on a suite, writes its inline snapshots when the suite ends (required by `assertInline` under Swift Testing)
 
-### Common Snapshot Strategies
+```swift
+@Suite(.record(.failed), .diffTool(.ksdiff))
+struct FeatureTests { … }
+```
 
-SnapshotTesting provides various strategies for different types of content:
+### Common snapshot strategies
 
-- `.image` - Captures a view or view controller as an image
-- `.string` - Captures content as a string
-- `.json` - Captures encodable data as JSON
-- `.recursiveDescription` - Captures the recursive description of a view
+- `.image` - a view or view controller as an image
+- `.lines` - text, compared line by line
+- `.json` - an encodable value as JSON
+- `.customDump` - a value as the text of `swift-custom-dump` (available with `InlineSnapshotTesting`)
+- `.recursiveDescription` - the recursive description of a view
 
-For more examples and advanced usage, please refer to our documentation.
+### Inline snapshots
+
+```swift
+import InlineSnapshotTesting
+
+@Suite(.finalizeSnapshots)
+struct InlineTests {
+
+    @Test
+    func greets() throws {
+        try assertInline(of: ["Hello", "World"], as: .customDump) {
+            """
+            [
+              [0]: "Hello",
+              [1]: "World"
+            ]
+            """
+        }
+    }
+}
+```
+
+For more examples and advanced usage, please refer to the documentation.
 
 ## Versioning
 

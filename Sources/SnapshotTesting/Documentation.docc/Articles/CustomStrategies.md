@@ -1,97 +1,54 @@
 # Defining custom snapshot strategies
 
-While SnapshotTesting comes with a wide variety of snapshot strategies, it can also be extended with
-custom, user-defined strategies using the ``SnapshotTesting/Snapshotting`` and
-``SnapshotTesting/Diffing`` types.
+Describe how a value becomes the bytes that are saved and compared.
 
-## Snapshotting
+## Overview
 
-The ``SnapshotTesting/Snapshotting`` type represents the ability to transform a snapshottable value
-(like a view or data structure) into a diffable format (like an image or text).
+A strategy is a `Snapshot` value. It has three parts:
 
-### Transforming existing strategies
+- the file extension used to save the reference (`pathExtension`),
+- an attachment generator that compares a reference with a new value and describes the difference
+  (`.lines` compares text line by line),
+- an executor that turns the input into the output that is saved.
 
-Existing strategies can be transformed to work with new types using the `pullback` method.
+The output type conforms to `BytesRepresentable`; `StringBytes` stores text and `DataBytes` stores
+raw data.
 
-For example, given the following `image` strategy on `UIView`:
+### Synchronous strategies
 
-``` swift
-Snapshotting<UIView, UIImage>.image
-```
+The executor receives the input and a continuation to resume with the output (or an error):
 
-We can define an `image` strategy on `UIViewController` using the `pullback` method:
-
-``` swift
-extension Snapshotting where Value == UIViewController, Format == UIImage {
-  public static let image: Snapshotting = Snapshotting<UIView, UIImage>
-    .image
-    .pullback { viewController in viewController.view }
-}
-```
-
-Pullback takes a transform function from the new strategy's value to the existing strategy's value,
-in this case `(UIViewController) -> UIView`.
-
-### Creating brand new strategies
-
-Most strategies can be built from existing ones, but if you've defined your own
-``SnapshotTesting/Diffing`` strategy, you may need to create a base ``SnapshotTesting/Snapshotting``
-value alongside it.
-
-### Asynchronous Strategies
-
-Some types need to be snapshot in an asynchronous fashion. ``SnapshotTesting/Snapshotting`` offers
-two APIs for building asynchronous strategies by utilizing a built-in ``Async`` type.
-
-#### Async pullbacks
-
-Alongside ``Snapshotting/pullback(_:)`` there is ``Snapshotting/asyncPullback(_:)``, which takes a
-transform function `(NewStrategyValue) -> Async<ExistingStrategyValue>`.
-
-For example, WebKit's `WKWebView` offers a callback-based API for taking image snapshots, where the
-image is passed asynchronously to the callback block. While `pullback` would require the `UIImage`
-to be returned from the transform function, `asyncPullback` and `Async` allow us to pass the `image`
-a value that can pass its callback along to the scope in which the image has been created.
-
-``` swift
-extension Snapshotting where Value == WKWebView, Format == UIImage {
-  public static let image: Snapshotting = Snapshotting<UIImage, UIImage>
-    .image
-    .asyncPullback { webView in
-      Async { callback in
-        webView.takeSnapshot(with: nil) { image, error in
-          callback(image!)
-        }
-      }
-  }
-}
-```
-
-#### Async initialization
-
-`Snapshotting` defines an alternate initializer to describe snapshotting values in an asynchronous
-fashion.
-
-For example, were we to define a strategy for `WKWebView` _without_
-``Snapshotting/asyncPullback(_:)``:
-
-``` swift
-extension Snapshotting where Value == WKWebView, Format == UIImage {
-  public static let image = Snapshotting(
-    pathExtension: "png",
-    diffing: .image,
-    asyncSnapshot: { webView in
-      Async { callback in
-        webView.takeSnapshot(with: nil) { image, error in
-          callback(image!)
-        }
-      }
+```swift
+let uppercased = SyncSnapshot<String, StringBytes>(
+    pathExtension: "txt",
+    attachmentGenerator: .lines,
+    executor: Sync { input, continuation in
+        continuation.resume(returning: StringBytes(rawValue: input.uppercased()))
     }
-  )
-}
+)
+
+try assert(of: "value", as: uppercased)
 ```
 
-## Diffing
+### Asynchronous strategies
 
-The ``SnapshotTesting/Diffing`` type represents the ability to compare `Value`s and convert them to
-and from `Data`.
+Use `Async` when the output needs `await`:
+
+```swift
+let snapshot = AsyncSnapshot<String, StringBytes>(
+    pathExtension: "txt",
+    attachmentGenerator: .lines,
+    executor: Async { input in
+        try await Task.sleep(nanoseconds: 100_000_000)
+        return StringBytes(rawValue: input)
+    }
+)
+
+try await assert(of: "value", as: snapshot)
+```
+
+### Timeouts
+
+Both kinds of assertion take a `timeout` in seconds. The asynchronous `assert` has no timeout by
+default (zero); the synchronous one defaults to five seconds. When the time runs out, the assertion
+fails with a message that says how long it waited.
