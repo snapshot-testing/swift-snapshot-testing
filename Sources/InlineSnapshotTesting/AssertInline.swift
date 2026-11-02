@@ -54,7 +54,9 @@ public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     let engine = try SnapshotInlineEngine<XCSnapshotTesting.Async<Input, Output>>(
         expected: expected,
         message: message,
-        closureDescriptor: closureDescriptor
+        closureDescriptor: closureDescriptor,
+        line: line,
+        column: column
     )
 
     let tester = SnapshotTester(
@@ -138,7 +140,9 @@ public func assertInline<Input, Output: BytesRepresentable>(
     let engine = try SnapshotInlineEngine<Sync<Input, Output>>(
         expected: expected,
         message: message,
-        closureDescriptor: closureDescriptor
+        closureDescriptor: closureDescriptor,
+        line: line,
+        column: column
     )
 
     let tester = SnapshotTester(

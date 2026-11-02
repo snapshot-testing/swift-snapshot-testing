@@ -34,7 +34,9 @@ struct InlineEngineReferenceTests {
             let engine = try SnapshotInlineEngine<Sync<String, StringBytes>>(
                 expected: { "expected" },
                 message: { "" },
-                closureDescriptor: SnapshotClosureDescriptor()
+                closureDescriptor: SnapshotClosureDescriptor(),
+                line: 1,
+                column: 1
             )
             let url = URL(fileURLWithPath: "/tmp/Sample.swift").appendingPathComponent("test.1")
 
@@ -48,7 +50,7 @@ struct InlineEngineReferenceTests {
                     line: 1,
                     column: 1
                 ),
-                to: url
+                to: engine.storageURL(for: url)
             )
 
             let reference = try engine.loadSnapshot(from: url, using: tester(engine))
@@ -62,7 +64,9 @@ struct InlineEngineReferenceTests {
             let engine = try SnapshotInlineEngine<Sync<String, StringBytes>>(
                 expected: nil,
                 message: { "" },
-                closureDescriptor: SnapshotClosureDescriptor()
+                closureDescriptor: SnapshotClosureDescriptor(),
+                line: 1,
+                column: 1
             )
             let url = URL(fileURLWithPath: "/tmp/Sample.swift").appendingPathComponent("test.1")
 
@@ -76,11 +80,54 @@ struct InlineEngineReferenceTests {
                     line: 1,
                     column: 1
                 ),
-                to: url
+                to: engine.storageURL(for: url)
             )
 
             let reference = try engine.loadSnapshot(from: url, using: tester(engine))
             #expect(reference.rawValue == "recorded")
+        }
+    }
+
+    @Test
+    func twoAssertionsSharingAURLKeepTheirOwnRecords() throws {
+        try withInlineSnapshotManager {
+            let first = try SnapshotInlineEngine<Sync<String, StringBytes>>(
+                expected: nil,
+                message: { "" },
+                closureDescriptor: SnapshotClosureDescriptor(),
+                line: 10,
+                column: 5
+            )
+            let second = try SnapshotInlineEngine<Sync<String, StringBytes>>(
+                expected: nil,
+                message: { "" },
+                closureDescriptor: SnapshotClosureDescriptor(),
+                line: 20,
+                column: 5
+            )
+            // `addsCounterSuffix = false` gives both assertions of a function the same URL.
+            let url = URL(fileURLWithPath: "/tmp/Sample.swift").appendingPathComponent("test")
+
+            try first.perform(
+                .write,
+                contents: Data("from the first".utf8),
+                to: url,
+                using: tester(first)
+            )
+
+            #expect(first.contentExists(at: url))
+            #expect(!second.contentExists(at: url), "the second assertion has not recorded anything")
+
+            try second.perform(
+                .write,
+                contents: Data("from the second".utf8),
+                to: url,
+                using: tester(second)
+            )
+
+            #expect(try first.loadSnapshot(from: url, using: tester(first)).rawValue == "from the first")
+            #expect(try second.loadSnapshot(from: url, using: tester(second)).rawValue == "from the second")
+            #expect(InlineSnapshotManager.current.records(for: "/tmp/Sample.swift").count == 2)
         }
     }
 }

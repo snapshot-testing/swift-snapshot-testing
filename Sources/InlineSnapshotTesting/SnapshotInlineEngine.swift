@@ -22,10 +22,17 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
     let message: @Sendable () -> String
     let closureDescriptor: SnapshotClosureDescriptor
 
+    /// Where the assertion is called, which tells two assertions apart even when they share a
+    /// snapshot URL (`addsCounterSuffix = false`, a repeated `name:`).
+    let line: UInt
+    let column: UInt
+
     init(
         expected: (@Sendable () -> Executor.Output.RawValue)?,
         message: @Sendable @escaping () -> String,
-        closureDescriptor: SnapshotClosureDescriptor
+        closureDescriptor: SnapshotClosureDescriptor,
+        line: UInt,
+        column: UInt
     ) throws {
         SnapshotInlineObservation.shared.registerIfNeeded()
         if TestingSystem.shared.isSwiftTestingRunning,
@@ -36,6 +43,13 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         self.expected = expected
         self.message = message
         self.closureDescriptor = closureDescriptor
+        self.line = line
+        self.column = column
+    }
+
+    /// The key the record of this assertion is kept under.
+    func storageURL(for url: URL) -> URL {
+        url.appendingPathComponent("\(line):\(column)", isDirectory: false)
     }
 
     func sourceURL(
@@ -66,7 +80,7 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
     func contentExists(
         at url: URL
     ) -> Bool {
-        expected != nil || InlineSnapshotManager.current.recordExists(at: url)
+        expected != nil || InlineSnapshotManager.current.recordExists(at: storageURL(for: url))
     }
 
     func loadSnapshot(
@@ -79,8 +93,8 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         // the test expects.
         if let expected {
             return Executor.Output(rawValue: expected())
-        } else if InlineSnapshotManager.current.recordExists(at: url) {
-            let snapshot = try InlineSnapshotManager.current.record(at: url)
+        } else if InlineSnapshotManager.current.recordExists(at: storageURL(for: url)) {
+            let snapshot = try InlineSnapshotManager.current.record(at: storageURL(for: url))
             return try tester.serialization.deserialize(Executor.Output.self, from: snapshot.diffable)
         } else {
             throw URLError(.fileDoesNotExist)
@@ -93,6 +107,8 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         to url: URL,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
     ) throws {
+        let url = storageURL(for: url)
+
         InlineSnapshotManager.current.write(
             InlineSnapshot(
                 reference: (try? InlineSnapshotManager.current.record(at: url))?.diffable,

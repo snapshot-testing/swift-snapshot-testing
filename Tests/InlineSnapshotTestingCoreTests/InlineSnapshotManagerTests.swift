@@ -192,7 +192,9 @@ struct InlineSnapshotManagerTests {
             _ = try SnapshotInlineEngine<Sync<String, StringBytes>>(
                 expected: nil,
                 message: { "" },
-                closureDescriptor: SnapshotClosureDescriptor()
+                closureDescriptor: SnapshotClosureDescriptor(),
+                line: 1,
+                column: 1
             )
         }
     }
