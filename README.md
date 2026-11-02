@@ -67,6 +67,18 @@ struct FeatureTests { … }
 - `.customDump` - a value as the text of `swift-custom-dump` (available with `InlineSnapshotTesting`)
 - `.recursiveDescription` - the recursive description of a view
 
+### Snapshot file names
+
+A snapshot without a `named:` argument is saved as `<function>.L<line>C<column>.<extension>`, the position of the assertion in the test file (assertions that take an array of strategies add `@<index>`). Passing `named:` gives the file a name that does not depend on the position:
+
+```swift
+try await assert(of: view, as: .image, named: "dark")  // testMyView.dark.png
+```
+
+> Important: From `xc-snapshot-testing` 2.0.2, which this package requires, unnamed snapshots are no longer numbered `.1`, `.2`, … in the order the assertions ran. Existing references of that form have to be renamed or recorded again, and moving an assertion to another line or column renames its file, so use `named:` for snapshots that must survive edits above them. There is no fallback that reads the old names.
+>
+> A custom `DiffTool` now receives absolute file paths in `currentFilePath` and `failedFilePath` instead of `file://` URLs.
+
 ### Inline snapshots
 
 ```swift

@@ -25,7 +25,7 @@ extension BaseSuite {
             try withKnownSnapshotURL { snapshotURL in
                 try withKnownIssue {
                     try withTestingEnvironment(record: .never) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     $0.comments.first?.rawValue ?? "" == """
@@ -44,7 +44,7 @@ extension BaseSuite {
             try withKnownSnapshotURL { snapshotURL in
                 try withKnownIssue {
                     try withTestingEnvironment(record: .missing) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     ($0.comments.first?.rawValue ?? "").hasPrefix(
@@ -71,14 +71,14 @@ extension BaseSuite {
 
                 try withKnownIssue {
                     try withTestingEnvironment(record: .missing) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     ($0.comments.first?.rawValue ?? "").hasPrefix(
                         """
                         Snapshot "\(#function)" does not match reference.
 
-                        ksdiff "\(snapshotURL.absoluteString)"
+                        ksdiff "\(snapshotURL.path)"
                         """
                     )
                 }
@@ -94,7 +94,7 @@ extension BaseSuite {
             try withKnownSnapshotURL { snapshotURL in
                 try withKnownIssue {
                     try withTestingEnvironment(record: .all) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     ($0.comments.first?.rawValue ?? "").hasPrefix(
@@ -119,7 +119,7 @@ extension BaseSuite {
 
                 try withKnownIssue {
                     try withTestingEnvironment(record: .all) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     ($0.comments.first?.rawValue ?? "").hasPrefix(
@@ -144,7 +144,7 @@ extension BaseSuite {
 
                 try withKnownIssue {
                     try withTestingEnvironment(record: .failed) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     ($0.comments.first?.rawValue ?? "").hasPrefix(
@@ -174,7 +174,7 @@ extension BaseSuite {
                     )[FileAttributeKey.modificationDate] as! Date
 
                 try withTestingEnvironment(record: .missing) {
-                    try assert(of: 42, as: .json)
+                    try assert(of: 42, as: .json, named: "reference")
                 }
 
                 try #expect(String(decoding: Data(contentsOf: snapshotURL), as: UTF8.self) == "42")
@@ -193,7 +193,7 @@ extension BaseSuite {
             try withKnownSnapshotURL { snapshotURL in
                 try withKnownIssue {
                     try withTestingEnvironment(record: .missing) {
-                        try assert(of: 42, as: .json)
+                        try assert(of: 42, as: .json, named: "reference")
                     }
                 } matching: {
                     ($0.comments.first?.rawValue ?? "").hasPrefix(
@@ -241,7 +241,7 @@ extension BaseSuite.RecordTests {
             snapshotURL.appendPathComponent(platform)
         }
 
-        snapshotURL.appendPathComponent("\(sanitizePathComponent(testName)).1.json")
+        snapshotURL.appendPathComponent("\(sanitizePathComponent(testName)).reference.json")
 
         if FileManager.default.fileExists(atPath: fileURL.path) {
             try? FileManager.default.removeItem(at: snapshotURL)
