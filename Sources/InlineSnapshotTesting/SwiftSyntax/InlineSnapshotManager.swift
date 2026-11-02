@@ -42,33 +42,41 @@ final class InlineSnapshotManager: @unchecked Sendable {
 
     /// Reads and parses the test file the first time it is seen.
     ///
+    /// The parsing runs outside the lock, so assertions of other files are not held back by it.
+    ///
     /// - Parameter scope: The Swift Testing scope the assertion runs in. The file is only written
     ///   once every scope that used it has finished.
     func registerTestSource(_ url: SnapshotURL, scope: UUID? = nil) throws {
+        let isKnown = lock.withLock { _testSourceCache[url] != nil }
+        let parsed = isKnown ? nil : try Self.parseTestSource(at: url)
+
         try lock.withLock {
             if _testSourceCache[url] == nil {
-                let path = String(describing: url.path)
-
-                let source = try String(contentsOfFile: path, encoding: .utf8)
-
-                let sourceFile = Parser.parse(source: source)
-
-                let sourceLocationConverter = SourceLocationConverter(
-                    fileName: path,
-                    tree: sourceFile
-                )
-
-                _testSourceCache[url] = TestSource(
-                    source: source,
-                    sourceFile: sourceFile,
-                    sourceLocationConverter: sourceLocationConverter
-                )
+                // Another thread may have registered it meanwhile, in which case its copy stays.
+                _testSourceCache[url] = try parsed ?? Self.parseTestSource(at: url)
             }
 
             if let scope {
                 _pendingScopes[url, default: []].insert(scope)
             }
         }
+    }
+
+    private static func parseTestSource(at url: SnapshotURL) throws -> TestSource {
+        let path = String(describing: url.path)
+
+        let source = try String(contentsOfFile: path, encoding: .utf8)
+
+        let sourceFile = Parser.parse(source: source)
+
+        return TestSource(
+            source: source,
+            sourceFile: sourceFile,
+            sourceLocationConverter: SourceLocationConverter(
+                fileName: path,
+                tree: sourceFile
+            )
+        )
     }
 
     func write(_ snapshot: InlineSnapshot, to url: URL) {

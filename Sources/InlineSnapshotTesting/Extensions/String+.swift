@@ -11,29 +11,59 @@ extension String {
 
     func indenting(with prefix: String) -> String {
         guard !prefix.isEmpty else { return self }
-        return self.replacingOccurrences(
-            of: #"([^\n]+)"#,
-            with: "\(prefix)$1",
-            options: .regularExpression
-        )
+
+        // Walks the scalars: as a `Character`, "\r\n" is one grapheme, and whether string APIs split
+        // it at the line feed differs between platforms.
+        var result = String.UnicodeScalarView()
+        var isAtLineStart = true
+
+        for scalar in self.unicodeScalars {
+            if scalar == "\n" {
+                isAtLineStart = true
+            } else if isAtLineStart {
+                result.append(contentsOf: prefix.unicodeScalars)
+                isAtLineStart = false
+            }
+            result.append(scalar)
+        }
+
+        return String(result)
     }
 
     func hashCount(isMultiline: Bool) -> Int {
-        let (quote, offset) = isMultiline ? ("\"\"\"", 2) : ("\"", 0)
-        var substring = self[...]
+        let quoteLength = isMultiline ? 3 : 1
+        // A run of quotes followed by hashes needs a delimiter longer than the hashes: `"""#` needs
+        // two, a single `"` followed by `#` needs two as well.
+        let overlap = isMultiline ? 2 : 0
+
+        let quote = UInt8(ascii: "\"")
+        let hash = UInt8(ascii: "#")
+
+        let bytes = Array(self.utf8)
         var hashCount = self.escapeHashCount()
-        let pattern = "(\(quote)[#]*)"
-        while let range = substring.range(of: pattern, options: .regularExpression) {
-            let count = substring.distance(from: range.lowerBound, to: range.upperBound) - offset
-            hashCount = max(count, hashCount)
-            substring = substring[range.upperBound...]
+        var index = 0
+
+        while index + quoteLength <= bytes.count {
+            guard bytes[index..<index + quoteLength].allSatisfy({ $0 == quote }) else {
+                index += 1
+                continue
+            }
+
+            var end = index + quoteLength
+            while end < bytes.count, bytes[end] == hash {
+                end += 1
+            }
+
+            hashCount = max(hashCount, end - index - overlap)
+            index = end
         }
+
         return hashCount
     }
 
     /// The delimiter length needed so that no backslash in the text starts an escape or an
     /// interpolation: one more `#` than the longest run that follows a backslash.
-    private func escapeHashCount() -> Int {
+    func escapeHashCount() -> Int {
         var count = 0
         var run: Int?
 
