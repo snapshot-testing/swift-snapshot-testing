@@ -4,39 +4,26 @@ Powerfully convenient snapshot testing.
 
 ## Overview
 
-[Snapshot Testing][swift-snapshot-testing] writes the snapshots it generates directly to disk
-alongside the test files. This makes for compact test cases with single line assertions...
+[Snapshot Testing][swift-snapshot-testing] writes the snapshots it generates to files next to the
+test files. This makes for compact test cases with single line assertions...
 
 ```swift
-assertSnapshot(of: value, as: .json)
+try await assert(of: value, as: .json)
 ```
 
-...but can make verification more cumbersome: one must find the corresponding file in order to
-verify that it matches their expectation. In this case, if the above assertion is the second one in
-a `testMySnapshot()` method in a `MySnapshotTests.swift` file, the snapshot will be found at:
+...but verifying a snapshot means finding the corresponding file.
 
-```sh
-$ cat __Snapshots__/MySnapshotTests/testMySnapshot.2.json
-{
-  "id": 42,
-  "name": "Blob"
-}
-```
-
-Inline Snapshot Testing offers an alternative approach by writing string snapshots directly into
-the test file. This makes it easy to verify a snapshot test at any time, since the value and
-snapshot sit next to each other in the assertion. One can `import InlineSnapshotTesting` and rewrite
-the above assertion as:
+Inline Snapshot Testing writes string snapshots directly into the test file, so the value and the
+snapshot sit next to each other. `import InlineSnapshotTesting` and rewrite the assertion as:
 
 ```swift
-assertInlineSnapshot(of: value, as: .json)
+try assertInline(of: value, as: .json)
 ```
 
-And when the test is run, it will automatically insert the snapshot as a trailing closure to be used
-by future test runs, and fail:
+When the test runs, it inserts the snapshot as a trailing closure and fails:
 
 ```swift
-assertInlineSnapshot(of: value, as: .json) {  // ❌
+try assertInline(of: value, as: .json) {  // ❌
   """
   {
     "id": 42,
@@ -52,24 +39,35 @@ assertInlineSnapshot(of: value, as: .json) {  // ❌
 Re-run "testMySnapshot" to test against the newly-recorded snapshot.
 ```
 
+The closure is the reference. A later run compares the value with it, and `record:` decides whether
+a mismatch rewrites it.
+
+### Swift Testing and XCTest
+
+Under XCTest the files are written when the test bundle finishes. Under Swift Testing they are
+written when the suite ends, so the suite needs the `.finalizeSnapshots` trait from
+`SnapshotTesting`; `assertInline` throws an error that says so when it is missing.
+
+```swift
+@Suite(.finalizeSnapshots)
+struct InlineTests { … }
+```
+
+The file is written from the version that was read when its first assertion ran. If the file
+changes on disk before it is written, for example because you saved it in the editor, it is left
+alone and the failure message says so.
+
 > Warning: When a snapshot is written into a test file, the undo history of the test file in Xcode
 > will be lost. Be careful to avoid losing work, and commit often to version control.
->
-> We would love for this to be fixed. Please [file feedback][apple-feedback] with Apple to improve
-> things, or if you have an idea of how we can improve things from the library, please
-> [start a discussion][discussions] or [open a pull request][pull-requests].
 
-[apple-feedback]: https://www.apple.com/feedback/
-[discussions]: https://github.com/pointfreeco/swift-composable-architecture/discussions
-[pull-requests]: https://github.com/pointfreeco/swift-composable-architecture/pulls
-[swift-snapshot-testing]: https://github.com/pointfreeco/swift-snapshot-testing
+[swift-snapshot-testing]: https://github.com/snapshot-testing/swift-snapshot-testing
 
 ## Topics
 
 ### Essentials
 
-- ``assertInlineSnapshot(of:as:message:record:timeout:syntaxDescriptor:matches:file:function:line:column:)``
+- ``assertInline(of:as:message:record:timeout:name:serialization:closureDescriptor:matches:fileID:file:function:line:column:)``
 
 ### Writing a custom helper
 
-- ``InlineSnapshotSyntaxDescriptor``
+- ``SnapshotClosureDescriptor``
