@@ -6,6 +6,7 @@ import Testing
 import Foundation
 import InlineSnapshotTesting
 import SnapshotTesting
+@_spi(Internals) import XCSnapshotTesting
 
 extension BaseSuite {
 
@@ -17,6 +18,20 @@ extension BaseSuite {
                   [0]: "Hello",
                   [1]: "World"
                 ]
+                """
+            }
+        }
+
+        @Test func inlineSnapshot_AsyncSnapshot() async throws {
+            let snapshot = AsyncSnapshot<String, StringBytes>(
+                pathExtension: "txt",
+                attachmentGenerator: .lines,
+                executor: Async { StringBytes(rawValue: $0) }
+            )
+
+            try await assertInline(of: "Hello", as: snapshot) {
+                """
+                Hello
                 """
             }
         }
