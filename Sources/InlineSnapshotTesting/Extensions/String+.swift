@@ -11,12 +11,23 @@ extension String {
 
     func indenting(with prefix: String) -> String {
         guard !prefix.isEmpty else { return self }
-        // Split on the line feed itself: as a `Character`, "\r\n" is one grapheme and would not split.
-        return
-            self
-            .components(separatedBy: "\n")
-            .map { $0.isEmpty ? $0 : prefix + $0 }
-            .joined(separator: "\n")
+
+        // Walks the scalars: as a `Character`, "\r\n" is one grapheme, and whether string APIs split
+        // it at the line feed differs between platforms.
+        var result = String.UnicodeScalarView()
+        var isAtLineStart = true
+
+        for scalar in self.unicodeScalars {
+            if scalar == "\n" {
+                isAtLineStart = true
+            } else if isAtLineStart {
+                result.append(contentsOf: prefix.unicodeScalars)
+                isAtLineStart = false
+            }
+            result.append(scalar)
+        }
+
+        return String(result)
     }
 
     func hashCount(isMultiline: Bool) -> Int {

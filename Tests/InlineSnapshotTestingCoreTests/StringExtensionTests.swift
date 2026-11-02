@@ -90,7 +90,7 @@ struct StringExtensionTests {
 
     @Test func indentingMatchesTheRegularExpression() {
         var generator = SystemRandomNumberGenerator()
-        let alphabet = ["a", "b", " ", "\n", "\n", "\t", "\r"]
+        let alphabet = ["a", "b", " ", "\n", "\n", "\t"]
 
         for _ in 0..<2_000 {
             let text = (0..<Int.random(in: 0...12, using: &generator))
@@ -99,6 +99,12 @@ struct StringExtensionTests {
 
             #expect(text.indenting(with: "    ") == regexIndenting(text, with: "    "), "\(text.debugDescription)")
         }
+    }
+
+    @Test func indentingTreatsACarriageReturnAsPartOfTheLine() {
+        // "\r\n" is a single grapheme, but the lines are split at the line feed on every platform.
+        #expect("a\r\nb".indenting(with: "  ") == "  a\r\n  b")
+        #expect("\r\n\r\n".indenting(with: "  ") == "  \r\n  \r\n")
     }
 
     @Test func indentingKeepsADollarSignAndABackslashInThePrefix() {
