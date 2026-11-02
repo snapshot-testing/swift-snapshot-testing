@@ -51,4 +51,58 @@ struct StringExtensionTests {
         #expect("x \"# y".hashCount(isMultiline: false) == 2)
         #expect("x \"### y".hashCount(isMultiline: false) == 4)
     }
+
+    // MARK: - Same results as the regular expressions they replaced
+
+    /// The implementation that used a regular expression, kept to check the scan against it.
+    private func regexHashCount(_ text: String, isMultiline: Bool) -> Int {
+        let (quote, offset) = isMultiline ? ("\"\"\"", 2) : ("\"", 0)
+        var substring = text[...]
+        var hashCount = text.escapeHashCount()
+        while let range = substring.range(of: "(\(quote)[#]*)", options: .regularExpression) {
+            hashCount = max(substring.distance(from: range.lowerBound, to: range.upperBound) - offset, hashCount)
+            substring = substring[range.upperBound...]
+        }
+        return hashCount
+    }
+
+    private func regexIndenting(_ text: String, with prefix: String) -> String {
+        text.replacingOccurrences(of: #"([^\n]+)"#, with: "\(prefix)$1", options: .regularExpression)
+    }
+
+    @Test func theQuoteScanMatchesTheRegularExpression() {
+        var generator = SystemRandomNumberGenerator()
+        let alphabet = ["\"", "\"", "\"", "#", "#", "\\", "a", " ", "\n"]
+
+        for _ in 0..<2_000 {
+            let text = (0..<Int.random(in: 0...14, using: &generator))
+                .map { _ in alphabet.randomElement(using: &generator)! }
+                .joined()
+
+            for isMultiline in [true, false] {
+                #expect(
+                    text.hashCount(isMultiline: isMultiline) == regexHashCount(text, isMultiline: isMultiline),
+                    "\(text.debugDescription), multiline: \(isMultiline)"
+                )
+            }
+        }
+    }
+
+    @Test func indentingMatchesTheRegularExpression() {
+        var generator = SystemRandomNumberGenerator()
+        let alphabet = ["a", "b", " ", "\n", "\n", "\t", "\r"]
+
+        for _ in 0..<2_000 {
+            let text = (0..<Int.random(in: 0...12, using: &generator))
+                .map { _ in alphabet.randomElement(using: &generator)! }
+                .joined()
+
+            #expect(text.indenting(with: "    ") == regexIndenting(text, with: "    "), "\(text.debugDescription)")
+        }
+    }
+
+    @Test func indentingKeepsADollarSignAndABackslashInThePrefix() {
+        // The regular expression read the prefix as a template, where these characters are special.
+        #expect("a\nb".indenting(with: "$1\\") == "$1\\a\n$1\\b")
+    }
 }
