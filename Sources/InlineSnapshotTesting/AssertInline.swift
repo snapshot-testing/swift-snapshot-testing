@@ -9,30 +9,44 @@ import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxBuilder
 
-/// Asserts that a given value matches an inline string snapshot using the specified snapshot testing strategy.
+/// Asserts that a value matches the snapshot written in the trailing closure of the call.
 ///
-/// This function compares the output of a value—evaluated lazily—with an inline snapshot string, which is stored directly in your test source code.
-/// If the output does not match the inline snapshot, the test will fail and optionally provide a descriptive message.
-/// You can optionally record new snapshots, customize serialization, and specify the snapshot comparison strategy.
+/// The value goes through `snapshot`, and the output is compared with the string in the closure. If
+/// the closure is missing, the output is written into the test source and the test fails, so you
+/// can review it. The record mode decides whether it is written. Run the test again to compare
+/// against it.
+///
+/// ```swift
+/// try await assertInline(of: user, as: .json) {
+///     """
+///     {
+///       "id" : 42,
+///       "name" : "Blob"
+///     }
+///     """
+/// }
+/// ```
 ///
 /// - Parameters:
-///   - value: A closure that returns the value to compare against the snapshot. This is evaluated only when the assertion runs.
-///   - snapshot: The snapshot testing strategy to use for serialization and comparison.
-///   - message: An optional closure that returns a description for test results. Defaults to an empty string.
-///   - record: An optional mode indicating whether to record a new reference snapshot. If `nil`, recording is determined automatically.
-///   - timeout: The number of seconds to wait for the snapshot operation to complete. Defaults to 5.
-///   - name: An optional name to distinguish this snapshot from others in the same test.
-///   - serialization: The strategy used to serialize the snapshot data. Defaults to `DataSerialization()`.
-///   - closureDescriptor: An optional descriptor describing the inline snapshot’s location. Typically not needed unless implementing custom helpers.
-///   - expected: An optional closure that returns a previously generated snapshot value. When omitted, the expected value will be populated inline at the call site.
-///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.
-///   - fileID: The file ID in which the assertion was called. Defaults to the file ID of the test case.
-///   - filePath: The file path in which the assertion was called. Defaults to the file path of the test case.
-///   - function: The function name in which the assertion was called. Defaults to the test method name.
-///   - line: The line number on which the assertion was called. Defaults to the line number of the call site.
-///   - column: The column on which the assertion was called. Defaults to the column number of the call site.
-/// - Throws: Rethrows any error thrown by the value provider or snapshot strategy.
-/// - Important: When using the Swift Testing framework, you must explicitly set the @Suite(.finalizeSnapshots) trait to ensure inline snapshots are written correctly.
+///   - value: The value to snapshot. It is evaluated when the assertion runs.
+///   - snapshot: How to turn the value into the output that is compared.
+///   - message: A description to show when the output does not match.
+///   - record: Overrides the record mode of the environment for this assertion.
+///   - timeout: How long to wait for the snapshot, in seconds. The default is 5.
+///   - name: A name that tells this snapshot apart from the others in the same test.
+///   - serialization: How the output is encoded and decoded.
+///   - closureDescriptor: Describes the closure that holds the snapshot. Only custom helpers need to change it.
+///   - expected: The snapshot to compare with. The trailing closure of the call provides it.
+///   - isolation: The actor that evaluates `value`.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - function: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `value`, running the snapshot, or writing the result.
+///
+/// - Important: With Swift Testing, apply `@Suite(.finalizeSnapshots)` to the suite. Without it, the call stops with a precondition failure.
+///
 /// - SeeAlso: <doc:InlineSnapshotTesting>
 public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     of value: @autoclosure @Sendable () async throws -> Input,
@@ -96,30 +110,43 @@ public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     }
 }
 
-/// Asserts that a value matches an inline string snapshot using a snapshot testing strategy.
+/// Asserts that a value matches the snapshot written in the trailing closure of the call.
 ///
-/// This function compares the output of a value—evaluated lazily—with an inline snapshot string
-/// stored directly in your test source code. If the output does not match the inline snapshot,
-/// the test will fail and optionally provide a descriptive message. You can optionally record new
-/// snapshots, customize serialization, and specify the snapshot comparison strategy.
+/// The value goes through `snapshot`, and the output is compared with the string in the closure. If
+/// the closure is missing, the output is written into the test source and the test fails, so you
+/// can review it. The record mode decides whether it is written. Run the test again to compare
+/// against it.
+///
+/// ```swift
+/// try assertInline(of: user, as: .json) {
+///     """
+///     {
+///       "id" : 42,
+///       "name" : "Blob"
+///     }
+///     """
+/// }
+/// ```
 ///
 /// - Parameters:
-///   - value: A closure that returns the value to compare against the snapshot. This is evaluated only when the assertion runs.
-///   - snapshot: The snapshot testing strategy to use for serialization and comparison.
-///   - message: An optional closure that returns a description for test results. Defaults to an empty string.
-///   - record: An optional mode indicating whether to record a new reference snapshot. If `nil`, recording is determined automatically.
-///   - timeout: The number of seconds to wait for the snapshot operation to complete. Defaults to 5.
-///   - name: An optional name to distinguish this snapshot from others in the same test.
-///   - serialization: The strategy used to serialize the snapshot data. Defaults to `DataSerialization()`.
-///   - closureDescriptor: An optional descriptor for the inline snapshot’s location. Typically not needed unless implementing custom helpers.
-///   - expected: An optional closure that returns a previously generated snapshot value. When omitted, the expected value will be populated inline at the call site.
-///   - fileID: The file ID in which the assertion was called. Defaults to the file ID of the test case.
-///   - filePath: The file path in which the assertion was called. Defaults to the file path of the test case.
-///   - function: The function name in which the assertion was called. Defaults to the test method name.
-///   - line: The line number on which the assertion was called. Defaults to the line number of the call site.
-///   - column: The column on which the assertion was called. Defaults to the column number of the call site.
-/// - Throws: Rethrows any error thrown by the value provider or snapshot strategy.
-/// - Important: When using the Swift Testing framework, you must explicitly set the @Suite(.finalizeSnapshots) trait to ensure inline snapshots are written correctly.
+///   - value: The value to snapshot. It is evaluated when the assertion runs.
+///   - snapshot: How to turn the value into the output that is compared.
+///   - message: A description to show when the output does not match.
+///   - record: Overrides the record mode of the environment for this assertion.
+///   - timeout: How long to wait for the snapshot, in seconds. The default is 5.
+///   - name: A name that tells this snapshot apart from the others in the same test.
+///   - serialization: How the output is encoded and decoded.
+///   - closureDescriptor: Describes the closure that holds the snapshot. Only custom helpers need to change it.
+///   - expected: The snapshot to compare with. The trailing closure of the call provides it.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - function: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `value`, running the snapshot, or writing the result.
+///
+/// - Important: With Swift Testing, apply `@Suite(.finalizeSnapshots)` to the suite. Without it, the call stops with a precondition failure.
+///
 /// - SeeAlso: <doc:InlineSnapshotTesting>
 public func assertInline<Input, Output: BytesRepresentable>(
     of value: @autoclosure @Sendable () throws -> Input,
@@ -182,6 +209,7 @@ public func assertInline<Input, Output: BytesRepresentable>(
     }
 }
 #else
+/// Unavailable: `assertInline` needs `swift-syntax` 601.0.0 or later.
 @available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 601.0.0")
 public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     of value: @autoclosure @Sendable () async throws -> Input,
@@ -203,6 +231,7 @@ public func assertInline<Input: Sendable, Output: BytesRepresentable>(
     fatalError()
 }
 
+/// Unavailable: `assertInline` needs `swift-syntax` 601.0.0 or later.
 @available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 601.0.0")
 public func assertInline<Input, Output: BytesRepresentable>(
     of value: @autoclosure @Sendable () throws -> Input,

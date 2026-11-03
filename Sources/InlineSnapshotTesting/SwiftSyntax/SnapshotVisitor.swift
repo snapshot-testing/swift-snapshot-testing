@@ -4,6 +4,9 @@
 #if canImport(SwiftSyntax601)
 import SwiftSyntax
 
+/// Finds the line of the closure that holds the snapshot of an assertion.
+///
+/// Failures are reported on that line instead of on the line of the call.
 final class SnapshotVisitor: SyntaxVisitor {
 
     let functionCallColumn: Int
@@ -25,6 +28,8 @@ final class SnapshotVisitor: SyntaxVisitor {
         super.init(viewMode: .all)
     }
 
+    /// Looks for the call at the given line and column, and stores the line of its snapshot closure
+    /// in ``trailingClosureLine``. It follows the same offset rules as ``SnapshotRewriter``.
     override func visit(_ functionCallExpr: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         let location = functionCallExpr.calledExpression.endLocation(
             converter: self.sourceLocationConverter,

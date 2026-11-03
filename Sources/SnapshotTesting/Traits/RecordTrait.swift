@@ -6,38 +6,37 @@ import Foundation
 import Testing
 @_spi(Internals) import XCSnapshotTesting
 
+/// A trait that sets the record mode of a test or suite.
+///
+/// Create one with ``Testing/Trait/record(_:)``.
 public struct RecordTrait: SuiteTrait, TestTrait {
+
+    /// Applies the trait to the tests nested in a suite.
     public let isRecursive = true
     let recordMode: RecordMode
 }
 
 extension Trait where Self == RecordTrait {
 
-    /// Adds record mode configuration to a suite or test.
+    /// Sets the record mode of a test or suite.
     ///
-    /// Use this trait to specify the snapshot recording mode for the test or suite.
-    /// This is typically used in snapshot testing to control whether expected
-    /// snapshots are created or updated.
-    ///
-    /// The default value is `.missing`, which means a snapshot will only be recorded if no file is found (i.e., a snapshot is missing).
-    ///
-    /// ## Examples
+    /// The record mode decides when snapshots are written. The default is `.missing`, which writes a
+    /// snapshot only when there is no reference for it yet.
     ///
     /// ```swift
     /// @Test(.record(.all))
-    /// func testRecordAllSnapshots() async throws {
-    ///     // Test code here
+    /// func recordAllSnapshots() async throws {
+    ///     // ...
     /// }
     ///
     /// @Suite(.record(.never))
-    /// struct NoSnapshotRecordingTests {
-    ///     // Suite contents here
+    /// struct NoRecordingTests {
+    ///     // ...
     /// }
     /// ```
     ///
-    /// - Parameter recordMode: The `RecordMode` value to use when running tests.
-    ///   This controls whether snapshots should be recorded (created/updated) or not.
-    /// - Returns: A `RecordTrait` configured with the given `recordMode`.
+    /// - Parameter recordMode: The record mode to use.
+    /// - Returns: A trait to apply to a suite or a test.
     public static func record(_ recordMode: RecordMode) -> Self {
         .init(recordMode: recordMode)
     }

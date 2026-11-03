@@ -7,6 +7,7 @@ import Foundation
 @_spi(Internals) import SnapshotTesting
 #endif
 
+/// Waits for the end of the test run to write the pending inline snapshots.
 final class SnapshotInlineObservation: @unchecked Sendable {
 
     static let shared = SnapshotInlineObservation()
@@ -17,6 +18,10 @@ final class SnapshotInlineObservation: @unchecked Sendable {
     private var _xcObserver: NSObjectProtocol?
     private var _swiftTestingObserver: NSObjectProtocol?
 
+    /// Starts observing, if it is not observing yet.
+    ///
+    /// When the XCTest bundle finishes, the snapshots of every file are written. When a Swift Testing
+    /// suite finishes, only the snapshots of the file named in the notification are written.
     func registerIfNeeded() {
         lock.withLock {
             guard !_isObserving else {

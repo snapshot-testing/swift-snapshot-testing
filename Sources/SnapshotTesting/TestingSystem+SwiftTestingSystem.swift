@@ -8,18 +8,24 @@ import Testing
 
 extension TestingSystem: @retroactive SwiftTestingSystem {
 
+    /// The overrides set by the traits of the running test, or `nil` outside of a test.
     public var environment: TestingSystemEnvironment? {
         Test.current?.traits.mapIntoTestingEnvironment()
     }
 
+    /// Whether code is running inside a Swift Testing test.
     public var isRunning: Bool {
         Test.current != nil
     }
 
+    /// Whether the running test belongs to a suite that applies the `finalizeSnapshots` trait.
     public var isTestCompletionAttached: Bool {
         isRunning && TestCompletionNotifier.current != nil
     }
 
+    /// Attaches each attachment that has a payload to the running test.
+    ///
+    /// Swift Testing has no activities, so `name` is not used.
     public func add(
         _ name: String,
         attachments: [SnapshotAttachment],
@@ -53,6 +59,7 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
         }
     }
 
+    /// Records `message` as an issue on the running test.
     public func record(
         message: String,
         fileID: StaticString,
@@ -74,6 +81,9 @@ extension TestingSystem: @retroactive SwiftTestingSystem {
 
 extension Array where Element == any Trait {
 
+    /// Merges the snapshot traits into one environment.
+    ///
+    /// The traits are read in reverse order, and the first value found for each setting is kept.
     func mapIntoTestingEnvironment() -> TestingSystemEnvironment {
         var environment = TestingSystemEnvironment()
 

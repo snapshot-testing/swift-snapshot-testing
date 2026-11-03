@@ -30,6 +30,12 @@ extension String {
         return String(result)
     }
 
+    /// Returns the number of `#` that delimit this text as a raw string literal.
+    ///
+    /// That is one more than the longest run of `#` after a quote in the text, so that the text cannot
+    /// close the literal early. A text with a backslash needs at least one, to keep the backslash literal.
+    ///
+    /// - Parameter isMultiline: Whether the literal uses `"""` instead of `"`.
     func hashCount(isMultiline: Bool) -> Int {
         let quoteLength = isMultiline ? 3 : 1
         // A run of quotes followed by hashes needs a delimiter longer than the hashes: `"""#` needs
