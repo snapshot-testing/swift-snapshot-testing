@@ -3,36 +3,21 @@
 
 @_spi(Internals) import XCSnapshotTesting
 
-/// A structure that describes the location of an inline snapshot.
+/// Describes the trailing closure that holds an inline snapshot.
 ///
-/// Provide this structure when defining custom snapshot functions that call
-/// ``InlineSnapshotTesting/assertInline(of:as:message:record:timeout:name:serialization:closureDescriptor:matches:fileID:file:function:line:column:)``
-/// under the hood.
-/// A descriptor for the trailing closure used to supply an inline snapshot in a custom snapshot assertion.
+/// Pass one to ``assertInline(of:as:message:record:timeout:name:serialization:closureDescriptor:matches:fileID:file:function:line:column:)``
+/// from a custom assertion whose snapshot closure is not the first trailing closure, or is not
+/// labeled `matches`. The library uses it to find that closure in the source of the test, both to
+/// write the snapshot into it and to report a failure on its line.
 ///
-/// Use this type when implementing custom snapshot assertion utilities that ultimately delegate to
-/// ``InlineSnapshotTesting/assertInline(of:as:message:record:timeout:name:serialization:closureDescriptor:matches:fileID:file:function:line:column:)``.
-/// It describes the structure of the inline snapshot trailing closure, supporting both current and deprecated closure labels,
-/// as well as more advanced cases where multiple trailing closures may exist.
-///
-/// This type enables tools and assertion infrastructure to accurately associate test failures or snapshot updates
-/// with the correct closure in the source code, even in the presence of multiple or labeled trailing closures.
-///
-/// For example:
-/// - A function with a single trailing closure for the snapshot uses the default offset (0) and label ("matches").
-/// - A function with an additional preceding trailing closure requires a higher offset and possibly a custom label.
-///
-/// Deprecated closure labels are supported for migration scenarios, allowing detection and management of legacy call sites.
-///
-/// The type is `Sendable` and `Hashable`, making it suitable for concurrent and collection-based use.
+/// A label that was renamed can be listed in ``deprecatedTrailingClosureLabels``, so call sites
+/// that still use the old label are found as well.
 public struct SnapshotClosureDescriptor: Sendable, Hashable {
 
     /// The default label describing an inline snapshot.
     public static let defaultTrailingClosureLabel = "matches"
 
-    /// A list of trailing closure labels from deprecated interfaces.
-    ///
-    /// Useful for providing migration paths for custom snapshot functions.
+    /// Labels that earlier versions of the helper used for the snapshot closure.
     public var deprecatedTrailingClosureLabels: [String]
 
     /// The label of the trailing closure that returns the inline snapshot.
@@ -83,9 +68,9 @@ public struct SnapshotClosureDescriptor: Sendable, Hashable {
     #if canImport(SwiftSyntax601)
     /// Generates a test failure immediately and unconditionally at the described trailing closure.
     ///
-    /// This method will attempt to locate the line of the trailing closure described by this type
-    /// and call `XCTFail` with it. If the trailing closure cannot be located, the failure will be
-    /// associated with the given line, instead.
+    /// This method tries to locate the line of the trailing closure described by this type and
+    /// reports the failure there. If the trailing closure cannot be located, the failure is
+    /// reported on the given line instead.
     ///
     /// - Parameters:
     ///   - message: An optional description of the assertion, for inclusion in test results.
@@ -97,6 +82,7 @@ public struct SnapshotClosureDescriptor: Sendable, Hashable {
     ///     this function was called.
     ///   - column: The column on which failure occurred. Defaults to the column on which this
     ///     function was called.
+    /// - Throws: The failure itself, when neither XCTest nor Swift Testing is available to record it.
     public func fail(
         _ message: @autoclosure () -> String,
         fileID: StaticString,
@@ -129,6 +115,7 @@ public struct SnapshotClosureDescriptor: Sendable, Hashable {
         self.trailingClosureLabel == label || self.deprecatedTrailingClosureLabels.contains(label)
     }
     #else
+    /// Unavailable: reporting at the closure needs `SwiftSyntax601` to be importable.
     @available(*, unavailable, message: "'assertInline' requires 'swift-syntax' >= 509.0.0")
     public func fail(
         _ message: @autoclosure () -> String = "",

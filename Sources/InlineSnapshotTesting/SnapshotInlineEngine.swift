@@ -16,6 +16,11 @@ struct MissingFinalizeSnapshotsError: Error, CustomStringConvertible {
     }
 }
 
+/// A ``SnapshotEngine`` that keeps references in the source of the test, not in files.
+///
+/// The reference to compare against is the one given in the `matches` closure of the assertion, or a
+/// snapshot already recorded during the run. Recorded snapshots are held by ``InlineSnapshotManager``,
+/// which writes them into the test source when the run finishes.
 struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Executor.Output: BytesRepresentable {
 
     let expected: (@Sendable () -> Executor.Output.RawValue)?
@@ -52,6 +57,7 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         url.appendingPathComponent("\(line):\(column)", isDirectory: false)
     }
 
+    /// Registers the test file with the manager, so it is parsed once, and returns its URL.
     func sourceURL(
         for filePath: StaticString,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
@@ -83,6 +89,9 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         expected != nil || InlineSnapshotManager.current.recordExists(at: storageURL(for: url))
     }
 
+    /// Returns the snapshot recorded for `url` during the run, or else the one in the `matches` closure.
+    ///
+    /// - Throws: `URLError(.fileDoesNotExist)` if there is neither.
     func loadSnapshot(
         from url: URL,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
@@ -101,6 +110,9 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         }
     }
 
+    /// Hands the snapshot to the manager, to be written into the test source later.
+    ///
+    /// Only a `.write` operation marks the snapshot as one to write. `.notify` just registers it.
     func perform(
         _ operation: SnapshotPerformOperation,
         contents: Data,
@@ -123,6 +135,7 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
         )
     }
 
+    /// Returns the failure message for `context.reason`.
     func generateFailureMessage(
         for context: SnapshotFailContext,
         using tester: SnapshotTester<SnapshotInlineEngine<Executor>>
@@ -142,6 +155,7 @@ struct SnapshotInlineEngine<Executor: SnapshotExecutor>: SnapshotEngine where Ex
 
 extension SnapshotInlineEngine {
 
+    /// The message for an assertion that had no snapshot yet.
     fileprivate func missing(_ context: SnapshotFailContext) -> String {
         let name = String(describing: context.function)
 
@@ -162,12 +176,13 @@ extension SnapshotInlineEngine {
         }
 
         return """
-            No reference was found on disk. \(failure):
+            No reference was found on disk. \(failure)
 
             Re-run "\(name)" to assert against the newly-recorded snapshot.
             """
     }
 
+    /// The message for an assertion whose output differs from the snapshot.
     fileprivate func doesNotMatch(_ context: SnapshotFailContext) -> String {
         var message: String = message()
 
@@ -186,6 +201,7 @@ extension SnapshotInlineEngine {
         return message
     }
 
+    /// The message for an assertion that replaced the snapshot because the record mode is `.all`.
     fileprivate func allRecordMode(_ context: SnapshotFailContext) -> String {
         let name = String(describing: context.function)
 

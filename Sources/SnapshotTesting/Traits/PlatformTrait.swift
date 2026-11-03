@@ -6,28 +6,32 @@ import Foundation
 import Testing
 @_spi(Internals) import XCSnapshotTesting
 
+/// A trait that sets the platform name used in the path of the reference snapshots.
+///
+/// Create one with ``Testing/Trait/platform(_:)``.
 public struct PlatformTrait: SuiteTrait, TestTrait {
+
+    /// Applies the trait to the tests nested in a suite.
     public let isRecursive = true
     let platform: String
 }
 
 extension Trait where Self == PlatformTrait {
 
-    /// Adds a platform trait to a test or suite, allowing it to be conditionally
-    /// included or configured based on the specified platform identifier.
+    /// Sets the platform name used in the path of the reference snapshots.
     ///
-    /// You can use this trait to annotate tests for filtering or to provide specialized
-    /// behaviors on certain platforms (such as "iOS", "macOS", "watchOS", or "visionOS").
+    /// References are stored in a directory named after the platform, such as `__Snapshots__/iOS`.
+    /// By default the name is that of the platform running the test. Set it to read references
+    /// that were recorded on another platform.
     ///
-    /// Example usage:
+    /// ```swift
+    /// @Suite(.platform("iOS"))
+    /// struct MySnapshotTests { ... }
+    /// ```
     ///
-    ///     @Suite(.platform("iOS"))
-    ///
-    /// - Parameter platform: An optional string specifying the platform identifier.
-    ///
-    /// - Returns: A `PlatformTrait` configured with the given platform.
-    ///
-    /// - Note: Setting this value to `nil` or an empty string (e.g., `.platform(nil)` or `.platform("")`) makes all snapshots for this suite or test shared between platforms, removing any platform-specific distinction.
+    /// - Parameter platform: The platform name. `nil` or an empty string removes the platform
+    ///   directory, so every platform shares the same references.
+    /// - Returns: A trait to apply to a suite or a test.
     public static func platform(_ platform: String?) -> Self {
         .init(platform: platform ?? "")
     }

@@ -7,6 +7,11 @@ import SwiftSyntax
 import SwiftParser
 @_spi(Internals) import XCSnapshotTesting
 
+/// Collects the inline snapshots recorded during a run and writes them into the test sources.
+///
+/// Calls use the shared instance, unless `withInlineSnapshotManager` installed
+/// another one for the current task. A source is parsed with SwiftSyntax the first time it is used,
+/// and kept until its snapshots are written.
 final class InlineSnapshotManager: @unchecked Sendable {
 
     static var current: InlineSnapshotManager {
@@ -158,6 +163,7 @@ final class InlineSnapshotManager: @unchecked Sendable {
 
     // MARK: - Unsafe methods
 
+    /// Returns the snapshots recorded for the file at `filePath`. The caller holds the lock.
     private func _records(for filePath: StaticString) -> [InlineSnapshot] {
         let url = URL(fileURLWithPath: String(describing: filePath))
 
@@ -169,6 +175,8 @@ final class InlineSnapshotManager: @unchecked Sendable {
         return records
     }
 
+    /// Rewrites `testSource` with `snapshots`, and saves the file if its text changed.
+    /// The caller holds the lock.
     private func _writeInlineSnapshots(
         _ snapshots: [InlineSnapshot],
         at url: SnapshotURL,
@@ -258,6 +266,10 @@ final class InlineSnapshotManager: @unchecked Sendable {
     }
 }
 
+/// Runs `operation` with an inline snapshot manager of its own, instead of the shared one.
+///
+/// The snapshots recorded by `operation` stay apart from the ones of the rest of the run. They are
+/// written to their test sources when the manager is released, after `operation` returns.
 @_spi(Internals)
 public nonisolated(nonsending) func withInlineSnapshotManager<R: Sendable>(
     _ operation: nonisolated(nonsending) () async throws -> R,
@@ -272,6 +284,10 @@ public nonisolated(nonsending) func withInlineSnapshotManager<R: Sendable>(
     )
 }
 
+/// Runs `operation` with an inline snapshot manager of its own, instead of the shared one.
+///
+/// The snapshots recorded by `operation` stay apart from the ones of the rest of the run. They are
+/// written to their test sources when the manager is released, after `operation` returns.
 @_spi(Internals)
 public func withInlineSnapshotManager<R>(
     _ operation: () throws -> R,

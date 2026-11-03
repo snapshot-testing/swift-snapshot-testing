@@ -4,6 +4,7 @@
 #if canImport(SwiftSyntax601)
 import SwiftSyntax
 
+/// Rewrites the assertions of a test file so that their trailing closure holds the recorded snapshot.
 final class SnapshotRewriter: SyntaxRewriter {
 
     let file: SnapshotURL
@@ -27,6 +28,13 @@ final class SnapshotRewriter: SyntaxRewriter {
         self.sourceLocationConverter = sourceLocationConverter
     }
 
+    /// Updates the assertion call that sits at the line and column of a recorded snapshot.
+    ///
+    /// Only snapshots that were recorded and differ from their reference are written. The closure
+    /// is looked for through the offset of the closure descriptor, which counts from the first trailing
+    /// closure: below zero it is an argument inside the parentheses, zero is the trailing closure, and
+    /// above zero it is one of the additional trailing closures. A snapshot without content removes
+    /// its closure.
     override func visit(_ functionCallExpr: FunctionCallExprSyntax) -> ExprSyntax {
         let location = functionCallExpr.calledExpression
             .endLocation(converter: self.sourceLocationConverter, afterTrailingTrivia: true)

@@ -1,6 +1,9 @@
 // Copyright (c) Snapshot Testing
 // SPDX-License-Identifier: MIT
 
+/// The path of a test source file, usable as a dictionary key.
+///
+/// `StaticString` is not `Hashable`, so this type compares and hashes the text of the path.
 struct SnapshotURL: Sendable, Hashable {
 
     let path: StaticString

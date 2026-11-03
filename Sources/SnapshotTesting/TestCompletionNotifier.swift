@@ -6,10 +6,15 @@ import Foundation
 import Testing
 @_spi(Internals) import XCSnapshotTesting
 
+/// A suite trait that tells the library when every test of the suite has finished.
+///
+/// Create one with ``Testing/Trait/finalizeSnapshots``.
 public struct FinalizeSnapshotsSuiteTrait: SuiteTrait {
 
+    /// The trait applies only to the suite that declares it, not to the suites nested in it.
     public let isRecursive = false
 
+    /// Returns the scope that tracks the completion of the suite.
     public func scopeProvider(
         for test: Test,
         testCase: Test.Case?
@@ -20,24 +25,19 @@ public struct FinalizeSnapshotsSuiteTrait: SuiteTrait {
 
 extension Trait where Self == FinalizeSnapshotsSuiteTrait {
 
-    /// A suite trait that finalizes all snapshot tests after the suite completes execution.
+    /// Writes the pending inline snapshots into the test file once the suite has finished.
     ///
-    /// Use this trait to automatically trigger snapshot finalization logic—
-    /// such as emitting notifications or performing cleanup—after all tests
-    /// in a suite have finished running. This is useful for ensuring that any
-    /// resources or state associated with snapshot testing are properly handled
-    /// after tests conclude.
+    /// Inline snapshots are written into the source of the test once its tests have run. XCTest
+    /// reports the end of the test bundle, and that is when the library writes them. Under Swift
+    /// Testing this trait provides that signal, and `assertInline` stops with a precondition failure
+    /// if the suite does not apply it.
     ///
-    /// Apply this trait to your test suite using the `@Suite(.finalizeSnapshots)`
-    /// macro.
-    ///
-    /// Example:
     /// ```swift
     /// @Suite(.finalizeSnapshots)
     /// struct MySnapshotTests { ... }
     /// ```
     ///
-    /// - Note: This trait is non-recursive and will only apply to the suite where it is specified.
+    /// The trait applies only to the suite that declares it, not to the suites nested in it.
     public static var finalizeSnapshots: Self {
         .init()
     }
@@ -45,8 +45,10 @@ extension Trait where Self == FinalizeSnapshotsSuiteTrait {
 
 extension FinalizeSnapshotsSuiteTrait {
 
+    /// The scope that keeps track of the suite until its tests have finished.
     public struct TestScopeProvider: TestScoping {
 
+        /// Runs `function`, and notifies the library when the suite has finished.
         public func provideScope(
             for test: Test,
             testCase: Test.Case?,
@@ -96,6 +98,10 @@ public var currentTestCompletionScopeID: UUID? {
     TestCompletionNotifier.current?.id
 }
 
+/// Posts ``SwiftTestingDidFinishNotification`` when it is released.
+///
+/// One instance lives for as long as a suite that applies the finalize trait is running, so the
+/// notification goes out when the suite ends.
 final class TestCompletionNotifier: Sendable {
 
     @TaskLocal static var current: TestCompletionNotifier?
